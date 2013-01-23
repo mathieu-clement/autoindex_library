@@ -256,6 +256,8 @@ public abstract class AsyncCariAutoIndexProvider extends AsyncAutoIndexProvider 
                 throw new ProviderException("Something went bad because we were presented the form page again!", plate);
             }
             String data = matcher.group(2);
+            data = ResponseUtils.removeUselessSpaces(data); // Clean data
+
             switch (counter) {
                 case 3:
                     plateOwner.setName(unescapeHtml(data));
