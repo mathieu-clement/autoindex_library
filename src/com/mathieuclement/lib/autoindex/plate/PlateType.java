@@ -48,6 +48,6 @@ public final class PlateType {
 
     @Override
     public boolean equals(Object obj) {
-        return obj instanceof PlateType & name.equals(((PlateType) obj).getName());
+        return obj instanceof PlateType && name.equals(((PlateType) obj).getName());
     }
 }
