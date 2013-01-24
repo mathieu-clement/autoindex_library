@@ -32,6 +32,7 @@ import org.apache.http.protocol.HttpContext;
 import java.io.IOException;
 import java.io.UnsupportedEncodingException;
 import java.util.*;
+import java.util.logging.Logger;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -39,6 +40,15 @@ public abstract class AsyncCariAutoIndexProvider extends AsyncAutoIndexProvider 
 
     private Map<PlateType, Integer> plateTypeMapping = new LinkedHashMap<PlateType, Integer>();
     private String lookupOwnerPageName = "rechDet";
+    private DefaultHttpClient httpClient;
+    private HttpContext httpContext;
+    private HttpRequest dummyPageViewRequest;
+    private BasicHttpEntityEnclosingRequest plateOwnerSearchRequest;
+    private HttpResponse plateOwnerResponse;
+    private PlateOwner plateOwner;
+    private PlateOwner plateOwner1;
+    private String htmlPage;
+    private CaptchaException captchaException = new CaptchaException("Invalid captcha code");
 
     public AsyncCariAutoIndexProvider() {
         super();
@@ -96,40 +106,46 @@ public abstract class AsyncCariAutoIndexProvider extends AsyncAutoIndexProvider 
     protected void makeRequestBeforeCaptchaEntered(Plate plate) {
         HttpParams httpParams = new BasicHttpParams();
         httpParams.setParameter(CoreProtocolPNames.PROTOCOL_VERSION, HttpVersion.HTTP_1_1);
-        makeRequestBeforeCaptchaEntered(plate, new DefaultHttpClient(httpParams));
+        if (httpClient == null) {
+            httpClient = new DefaultHttpClient(httpParams);
+        }
+        makeRequestBeforeCaptchaEntered(plate, httpClient);
     }
 
     protected void makeRequestBeforeCaptchaEntered(Plate plate, HttpClient httpClient) {
 
         // HTTP handling
-        HttpContext httpContext = new BasicHttpContext();
+        if (httpContext == null) {
+            httpContext = new BasicHttpContext();
+        }
         //httpParams.setParameter(ClientPNames.COOKIE_POLICY, CookiePolicy.RFC_2965);
         // use our own cookie store
 
 
         // Load page a first time and get that session cookie!
-        HttpRequest dummyPageViewRequest = new BasicHttpRequest("GET", getCariOnlineFullUrl() + lookupOwnerPageName, HttpVersion.HTTP_1_1);
-        CookieStore cookieStore = new BasicCookieStore();
-        httpContext.setAttribute(ClientContext.COOKIE_STORE, cookieStore);
-        //dummyPageViewRequest.setHeader(getHostHeader());
-        for (Header header : getHttpHeaders()) {
-            dummyPageViewRequest.addHeader(header);
-        }
-        try {
-            HttpResponse dummyResponse = httpClient.execute(getCariHttpHost(), dummyPageViewRequest, httpContext);
-            StatusLine statusLine = dummyResponse.getStatusLine();
-            if (statusLine.getStatusCode() != 200) {
-                firePlateRequestException(plate, new ProviderException("Bad status when doing the dummy page view request to get a session: " + statusLine.getStatusCode() + " " + statusLine.getReasonPhrase(), plate));
+        if (dummyPageViewRequest == null) {
+            dummyPageViewRequest = new BasicHttpRequest("GET", getCariOnlineFullUrl() + lookupOwnerPageName, HttpVersion.HTTP_1_1);
+            CookieStore cookieStore = new BasicCookieStore();
+            httpContext.setAttribute(ClientContext.COOKIE_STORE, cookieStore);
+            //dummyPageViewRequest.setHeader(getHostHeader());
+            for (Header header : getHttpHeaders()) {
+                dummyPageViewRequest.addHeader(header);
+            }
+            try {
+                HttpResponse dummyResponse = httpClient.execute(getCariHttpHost(), dummyPageViewRequest, httpContext);
+                StatusLine statusLine = dummyResponse.getStatusLine();
+                if (statusLine.getStatusCode() != 200) {
+                    firePlateRequestException(plate, new ProviderException("Bad status when doing the dummy page view request to get a session: " + statusLine.getStatusCode() + " " + statusLine.getReasonPhrase(), plate));
+                    return;
+                }
+                dummyResponse.getEntity().getContent().close();
+            } catch (IOException e) {
+                firePlateRequestException(plate, new ProviderException("Could not do the dummy page view request to get a session.", e, plate));
                 return;
             }
-            dummyResponse.getEntity().getContent().close();
-        } catch (IOException e) {
-            firePlateRequestException(plate, new ProviderException("Could not do the dummy page view request to get a session.", e, plate));
-            return;
         }
 
-        String captchaImageUrl = generateCaptchaImageUrl();
-        fireCaptchaCodeRequested(plate, captchaImageUrl, httpClient, getCariHttpHost(), httpContext, getCariHttpHostname(), this);
+        fireCaptchaCodeRequested(plate, generateCaptchaImageUrl(), httpClient, getCariHttpHost(), httpContext, getCariHttpHostname(), this);
     }
 
     @Override
@@ -140,9 +156,11 @@ public abstract class AsyncCariAutoIndexProvider extends AsyncAutoIndexProvider 
 
         // TODO Set referer
         // TODO Set User-Agent header to the most used browser (probably the last available version of Internet Explorer)
-        BasicHttpEntityEnclosingRequest plateOwnerSearchRequest = new BasicHttpEntityEnclosingRequest("POST", getCariOnlineFullUrl() + lookupOwnerPageName, HttpVersion.HTTP_1_1);
-        for (Header header : getHttpHeaders()) {
-            plateOwnerSearchRequest.addHeader(header);
+        if (plateOwnerSearchRequest == null) {
+            plateOwnerSearchRequest = new BasicHttpEntityEnclosingRequest("POST", getCariOnlineFullUrl() + lookupOwnerPageName, HttpVersion.HTTP_1_1);
+            for (Header header : getHttpHeaders()) {
+                plateOwnerSearchRequest.addHeader(header);
+            }
         }
 
         List<NameValuePair> postParams = new LinkedList<NameValuePair>();
@@ -187,7 +205,7 @@ public abstract class AsyncCariAutoIndexProvider extends AsyncAutoIndexProvider 
         }
 
         try {
-            HttpResponse plateOwnerResponse = httpClient.execute(getCariHttpHost(), plateOwnerSearchRequest, httpContext);
+            plateOwnerResponse = httpClient.execute(getCariHttpHost(), plateOwnerSearchRequest, httpContext);
             if (plateOwnerResponse.getStatusLine().getStatusCode() != 200) {
                 firePlateRequestException(plate, new ProviderException("Got status " + plateOwnerResponse.getStatusLine().getStatusCode()
                         + " from server when executing request to get plate owner of plate " + plate, plate));
@@ -195,7 +213,7 @@ public abstract class AsyncCariAutoIndexProvider extends AsyncAutoIndexProvider 
             }
 
             // Extract the plate owner from the HTML response
-            PlateOwner plateOwner = htmlToPlateOwner(plateOwnerResponse, plate);
+            plateOwner = htmlToPlateOwner(plateOwnerResponse, plate);
             fireCaptchaCodeAccepted(plate);
 
             // Close connection and release resources
@@ -215,20 +233,37 @@ public abstract class AsyncCariAutoIndexProvider extends AsyncAutoIndexProvider 
         } catch (PlateOwnerHiddenException e) {
             firePlateRequestException(plate, e);
         }
+
+        //firePlateRequestException(plate, new ProviderException("Problem with Captcha", new CaptchaException("Bad captcha"), plate));
     }
 
     protected abstract HttpHost getCariHttpHost();
 
     protected abstract String getCariHttpHostname();
 
+    private final Logger logger = Logger.getLogger("CariAutoIndexProvider");
+
     private static final Pattern plateOwnerPattern = Pattern.compile("<td class='libelle'>.+\\s*</td>\\s+<td( nowrap)?>\\s*(.+)\\s*</td>");
 
     private PlateOwner htmlToPlateOwner(HttpResponse response, Plate plate) throws IOException, PlateOwnerDataException, CaptchaException, ProviderException, PlateOwnerNotFoundException, PlateOwnerHiddenException {
-        String htmlPage = ResponseUtils.toString(response);
-        if (htmlPage.contains("Code incorrect")) {
-            throw new CaptchaException("Invalid captcha code");
+        htmlPage = ResponseUtils.toString(response);
+
+        // Check presence of warning (shown on Fribourg webpage)
+        /*
+        if(htmlPage.contains("iframe_warning")) {
+            logger.warning("Found a warning (iframe_warning) on page!");
         }
-        PlateOwner plateOwner = new PlateOwner();
+        */
+
+        // I have seen this once on the Valais webpage
+        if (htmlPage.contains("<title>Error</title>")) {
+            throw new ProviderException("Got the Error page: " + htmlPage, plate);
+        }
+
+        if (htmlPage.contains("Code incorrect")) {
+            throw captchaException;
+        }
+        plateOwner1 = new PlateOwner();
 
         // In Fribourg, currently the message "Aucun détenteur trouvé!" is shown both when the owner wants to hide its data and the number is not allocated,
         // but in Valais, the pages are different. It prints "Ce numéro de plaque est hors tabelle" when nobody owns the number.
@@ -260,10 +295,10 @@ public abstract class AsyncCariAutoIndexProvider extends AsyncAutoIndexProvider 
 
             switch (counter) {
                 case 3:
-                    plateOwner.setName(unescapeHtml(data));
+                    plateOwner1.setName(unescapeHtml(data));
                     break;
                 case 4:
-                    plateOwner.setAddress(unescapeHtml(data));
+                    plateOwner1.setAddress(unescapeHtml(data));
                     break;
                 case 5:
                 case 6:
@@ -274,16 +309,16 @@ public abstract class AsyncCariAutoIndexProvider extends AsyncAutoIndexProvider 
                     // Separate Zip code from town name
                     String[] split = unescapeHtml(data).split(" ");
                     try {
-                        plateOwner.setZip(Integer.parseInt(split[0])); // if this fails => we have a "Complément d'adresse" See second catch statement below.
+                        plateOwner1.setZip(Integer.parseInt(split[0])); // if this fails => we have a "Complément d'adresse" See second catch statement below.
 
                         try {
-                            plateOwner.setTown(unescapeHtml(data).substring(split[0].length() + 1));
+                            plateOwner1.setTown(unescapeHtml(data).substring(split[0].length() + 1));
                         } catch (Exception e) {
-                            plateOwner.setTown("[Error]");
+                            plateOwner1.setTown("[Error]");
                         }
                     } catch (Exception e) {
                         // Then case 5 is for the "Complément d'adresse".
-                        plateOwner.setAddressComplement(data == null ? "" : data);
+                        plateOwner1.setAddressComplement(data == null ? "" : data);
                     }
                     break;
             }
@@ -292,9 +327,9 @@ public abstract class AsyncCariAutoIndexProvider extends AsyncAutoIndexProvider 
         }
 
         // Check plate owner data
-        plateOwner.check();
+        plateOwner1.check();
 
-        return plateOwner;
+        return plateOwner1;
     }
 
     private String unescapeHtml(String escapedHtml) {

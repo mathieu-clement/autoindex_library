@@ -24,6 +24,47 @@ public class Plate {
         this.number = number;
     }
 
+    /**
+     * Format number such as
+     * 123      => "123"
+     * 1234     => "1234"
+     * 12345    => "12345"
+     * 123456   => "123 456"
+     *
+     * @param number plate number
+     * @return number formatted as string with middle space if needed
+     */
+    public static String formatNumber(int number) {
+        // Format number such as
+        // 123      => "123"
+        // 1234     => "1234"
+        // 12345    => "12345"
+        // 123456   => "123 456"
+
+        if (number < 1 || number > 999999) {
+            throw new IllegalArgumentException(number + " is not a valid plate number!");
+        }
+
+        String numberStr = String.valueOf(number);
+
+        // Don't do anything is number has less than 5 digits
+        if (number < 10000) {
+            return numberStr;
+        }
+
+        // If number has 5 digits, take first two digits, otherwise take first three digits
+        String partBeforeSpace, partAfterSpace;
+        if (number < 100000) {
+            partBeforeSpace = numberStr.substring(0, 2);
+            partAfterSpace = numberStr.substring(2, 5);
+        } else {
+            partBeforeSpace = numberStr.substring(0, 3);
+            partAfterSpace = numberStr.substring(3, 6);
+        }
+
+        return partBeforeSpace + " " + partAfterSpace;
+    }
+
     public Canton getCanton() {
         return canton;
     }

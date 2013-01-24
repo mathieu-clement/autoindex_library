@@ -41,6 +41,7 @@ import org.apache.http.protocol.HttpContext;
 import java.io.IOException;
 import java.io.UnsupportedEncodingException;
 import java.util.*;
+import java.util.logging.Logger;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -190,16 +191,32 @@ public abstract class CariAutoIndexProvider
 
     protected abstract String getCariHttpHostname();
 
+    private final Logger logger = Logger.getLogger("CariAutoIndexProvider");
+
     private static final Pattern plateOwnerPattern = Pattern.compile("<td class='libelle'>.+\\s*</td>\\s+<td( nowrap)?>\\s*(.+)\\s*</td>");
 
     private PlateOwner htmlToPlateOwner(HttpResponse response, Plate plate) throws IOException, PlateOwnerDataException, CaptchaException, ProviderException, PlateOwnerNotFoundException {
         String htmlPage = ResponseUtils.toString(response);
+
+        // Check presence of warning (shown on Fribourg webpage)
+        /*
+        if(htmlPage.contains("iframe_warning")) {
+            logger.warning("Found a warning (iframe_warning) on page!");
+        }
+        */
+
+        // I have seen this once on the Valais webpage
+        if (htmlPage.contains("<title>Error</title>")) {
+            throw new ProviderException("Got the Error page: " + htmlPage, plate);
+        }
+
         if (htmlPage.contains("Code incorrect")) {
             captchaHandler.onCaptchaFailed();
             throw new CaptchaException("Invalid captcha code");
         } else {
             captchaHandler.onCaptchaSuccessful();
         }
+
 
         PlateOwner plateOwner = new PlateOwner();
 
