@@ -5,11 +5,11 @@ import org.apache.http.HttpHost;
 public class AsyncFribourgAutoIndexProvider extends AsyncCariAutoIndexProvider {
     @Override
     protected String getCariOnlineFullUrl() {
-        return "https://appls2.fr.ch/cari-online/";
+        return "https://appls.fr.ch/cari-online/";
     }
 
     //private HttpHost httpHost = new HttpHost("156.25.9.252", 443, "https"); // appls2.fr.ch
-    private HttpHost httpHost = new HttpHost("appls2.fr.ch", 443, "https"); // Request has to be done with the correct name matching the Server certificate!
+    private HttpHost httpHost = new HttpHost("appls.fr.ch", 443, "https"); // Request has to be done with the correct name matching the Server certificate!
 
     @Override
     protected HttpHost getCariHttpHost() {

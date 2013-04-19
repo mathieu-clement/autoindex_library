@@ -4,6 +4,8 @@ import com.mathieuclement.lib.autoindex.plate.Plate;
 import com.mathieuclement.lib.autoindex.plate.PlateOwner;
 import com.mathieuclement.lib.autoindex.plate.PlateOwnerDataException;
 import com.mathieuclement.lib.autoindex.plate.PlateType;
+import com.mathieuclement.lib.autoindex.provider.common.MyHttpClient;
+import com.mathieuclement.lib.autoindex.provider.common.MySSLSocketFactory;
 import com.mathieuclement.lib.autoindex.provider.common.captcha.CaptchaException;
 import com.mathieuclement.lib.autoindex.provider.common.captcha.event.AsyncAutoIndexProvider;
 import com.mathieuclement.lib.autoindex.provider.exception.PlateOwnerHiddenException;
@@ -17,6 +19,10 @@ import org.apache.http.client.CookieStore;
 import org.apache.http.client.HttpClient;
 import org.apache.http.client.entity.UrlEncodedFormEntity;
 import org.apache.http.client.protocol.ClientContext;
+import org.apache.http.conn.ClientConnectionManager;
+import org.apache.http.conn.scheme.Scheme;
+import org.apache.http.conn.scheme.SchemeRegistry;
+import org.apache.http.conn.ssl.SSLSocketFactory;
 import org.apache.http.impl.client.BasicCookieStore;
 import org.apache.http.impl.client.DefaultHttpClient;
 import org.apache.http.message.BasicHeader;
@@ -28,9 +34,18 @@ import org.apache.http.params.CoreProtocolPNames;
 import org.apache.http.params.HttpParams;
 import org.apache.http.protocol.BasicHttpContext;
 import org.apache.http.protocol.HttpContext;
+import org.bouncycastle.jce.provider.BouncyCastleProvider;
 
+import javax.net.ssl.SSLContext;
+import javax.net.ssl.TrustManager;
+import javax.net.ssl.X509TrustManager;
+import java.io.File;
+import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.UnsupportedEncodingException;
+import java.security.Security;
+import java.security.cert.CertificateException;
+import java.security.cert.X509Certificate;
 import java.util.*;
 import java.util.logging.Logger;
 import java.util.regex.Matcher;
@@ -40,7 +55,7 @@ public abstract class AsyncCariAutoIndexProvider extends AsyncAutoIndexProvider 
 
     private Map<PlateType, Integer> plateTypeMapping = new LinkedHashMap<PlateType, Integer>();
     private String lookupOwnerPageName = "rechDet";
-    private DefaultHttpClient httpClient;
+    private HttpClient httpClient;
     private HttpContext httpContext;
     private HttpRequest dummyPageViewRequest;
     private BasicHttpEntityEnclosingRequest plateOwnerSearchRequest;
@@ -103,11 +118,59 @@ public abstract class AsyncCariAutoIndexProvider extends AsyncAutoIndexProvider 
      */
     protected abstract String getCariOnlineFullUrl();
 
+    private HttpClient sslClient(HttpClient client) {
+        try {
+            X509TrustManager tm = new X509TrustManager() {
+                public void checkClientTrusted(X509Certificate[] xcs, String string) throws CertificateException {
+                }
+
+                public void checkServerTrusted(X509Certificate[] xcs, String string) throws CertificateException {
+                }
+
+                public X509Certificate[] getAcceptedIssuers() {
+                    return null;
+                }
+            };
+            SSLContext ctx = SSLContext.getInstance("TLS");
+            ctx.init(null, new TrustManager[]{tm}, null);
+            SSLSocketFactory ssf = new MySSLSocketFactory(ctx);
+            ssf.setHostnameVerifier(SSLSocketFactory.ALLOW_ALL_HOSTNAME_VERIFIER);
+            ClientConnectionManager ccm = client.getConnectionManager();
+            SchemeRegistry sr = ccm.getSchemeRegistry();
+            sr.register(new Scheme("https", ssf, 443));
+            return new DefaultHttpClient(ccm, client.getParams());
+        } catch (Exception ex) {
+            throw new RuntimeException(ex);
+        }
+    }
+
     protected void makeRequestBeforeCaptchaEntered(Plate plate) {
         HttpParams httpParams = new BasicHttpParams();
         httpParams.setParameter(CoreProtocolPNames.PROTOCOL_VERSION, HttpVersion.HTTP_1_1);
         if (httpClient == null) {
-            httpClient = new DefaultHttpClient(httpParams);
+            /*
+            Workaround for SSL certificates problems
+            as found on http://stackoverflow.com/a/4837230/753136
+
+            You have to add CA file with this command:
+            CLASSPATH=~/Downloads/bcprov-ext-jdk15on-1.46.jar keytool -importcert -v
+            -file /home/mathieu/Documents/appls.fr.der -alias ca -keystore "mySrvTruststore.bks"
+            -provider org.bouncycastle.jce.provider.BouncyCastleProvider
+            -providerpath "bcprov-jdk16-145.jar" -storetype BKS -storepass testtest
+
+            The bks file is then moved to the res/raw/ folder as trust_store.bks.
+             */
+
+            try {
+                Security.addProvider(new BouncyCastleProvider());
+                File file = new File(MyHttpClient.class.getResource("trust_store.bks").getFile());
+                if(!file.exists()) {
+                    throw new RuntimeException("BKS file not found!");
+                }
+                httpClient = new MyHttpClient(new FileInputStream(file));
+            } catch (Exception e) {
+                throw new RuntimeException(e);
+            }
         }
         makeRequestBeforeCaptchaEntered(plate, httpClient);
     }
@@ -217,7 +280,8 @@ public abstract class AsyncCariAutoIndexProvider extends AsyncAutoIndexProvider 
             fireCaptchaCodeAccepted(plate);
 
             // Close connection and release resources
-            httpClient.getConnectionManager().shutdown();
+            // Disabled as a workaround for "java.lang.IllegalStateException: Connection manager has been shut down"
+            //httpClient.getConnectionManager().shutdown();
 
             firePlateOwnerFound(plate, plateOwner);
         } catch (IOException e) {
@@ -243,7 +307,7 @@ public abstract class AsyncCariAutoIndexProvider extends AsyncAutoIndexProvider 
 
     private final Logger logger = Logger.getLogger("CariAutoIndexProvider");
 
-    private static final Pattern plateOwnerPattern = Pattern.compile("<td class='libelle'>.+\\s*</td>\\s+<td( nowrap)?>\\s*(.+)\\s*</td>");
+    private static final Pattern plateOwnerPattern = Pattern.compile("<td class='libelle'>(.+)\\s*</td>\\s+<td( nowrap)?>\\s*(.+)\\s*</td>");
 
     private PlateOwner htmlToPlateOwner(HttpResponse response, Plate plate) throws IOException, PlateOwnerDataException, CaptchaException, ProviderException, PlateOwnerNotFoundException, PlateOwnerHiddenException {
         htmlPage = ResponseUtils.toString(response);
@@ -290,40 +354,28 @@ public abstract class AsyncCariAutoIndexProvider extends AsyncAutoIndexProvider 
             if (matcher.group(0).contains("checkField") || matcher.group(0).contains("Captcha Code generation error")) {
                 throw new ProviderException("Something went bad because we were presented the form page again!", plate);
             }
-            String data = matcher.group(2);
-            data = ResponseUtils.removeUselessSpaces(data); // Clean data
 
-            switch (counter) {
-                case 3:
-                    plateOwner1.setName(unescapeHtml(data));
-                    break;
-                case 4:
-                    plateOwner1.setAddress(unescapeHtml(data));
-                    break;
-                case 5:
-                case 6:
-                    // We may either have Case 5 with "Complément d'adresse" and then Case 6 with Zip code + town
-                    // or only Case 5 with Zip code + town
-                    // This is why we have two case statements and there is a test below to see if zip is a number
-
+            String dataName = matcher.group(1);
+            String dataValue = matcher.group(3);
+            dataValue = ResponseUtils.removeUselessSpaces(dataValue); // Clean data
+            if (dataName != null && dataValue != null) {
+                if (dataName.equals("Nom")) {
+                    plateOwner1.setName(unescapeHtml(dataValue));
+                } else if (dataName.equals("Adresse")) {
+                    plateOwner1.setAddress(unescapeHtml(dataValue));
+                } else if (dataName.equals("Complément")) {
+                    plateOwner1.setAddressComplement(unescapeHtml(dataValue));
+                } else if (dataName.equals("Localité")) {
                     // Separate Zip code from town name
-                    String[] split = unescapeHtml(data).split(" ");
+                    String[] split = unescapeHtml(dataValue).split(" ");
                     try {
-                        plateOwner1.setZip(Integer.parseInt(split[0])); // if this fails => we have a "Complément d'adresse" See second catch statement below.
-
-                        try {
-                            plateOwner1.setTown(unescapeHtml(data).substring(split[0].length() + 1));
-                        } catch (Exception e) {
-                            plateOwner1.setTown("[Error]");
-                        }
-                    } catch (Exception e) {
-                        // Then case 5 is for the "Complément d'adresse".
-                        plateOwner1.setAddressComplement(data == null ? "" : data);
+                        plateOwner1.setZip(Integer.parseInt(split[0]));
+                    } catch (NumberFormatException nfe) {
+                        throw new PlateOwnerDataException("Invalid ZIP code '" + split[0] + "'.", plateOwner);
                     }
-                    break;
+                    plateOwner1.setTown(unescapeHtml(dataValue).substring(split[0].length() + 1));
+                }
             }
-
-            counter++;
         }
 
         // Check plate owner data
