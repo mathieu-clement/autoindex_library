@@ -193,7 +193,7 @@ public abstract class CariAutoIndexProvider
 
     private final Logger logger = Logger.getLogger("CariAutoIndexProvider");
 
-    private static final Pattern plateOwnerPattern = Pattern.compile("<td class='libelle'>.+\\s*</td>\\s+<td( nowrap)?>\\s*(.+)\\s*</td>");
+    private static final Pattern plateOwnerPattern = Pattern.compile("<td class='libelle'>(.+)\\s*</td>\\s+<td( nowrap)?>\\s*(.+)\\s*</td>");
 
     private PlateOwner htmlToPlateOwner(HttpResponse response, Plate plate) throws IOException, PlateOwnerDataException, CaptchaException, ProviderException, PlateOwnerNotFoundException {
         String htmlPage = ResponseUtils.toString(response);
@@ -230,32 +230,31 @@ public abstract class CariAutoIndexProvider
 
         Matcher matcher = plateOwnerPattern.matcher(htmlPage);
 
-        byte counter = 0;
         while (matcher.find()) {
             if (matcher.group(0).contains("checkField") || matcher.group(0).contains("Captcha Code generation error")) {
                 throw new ProviderException("Something went bad because we were presented the form page again!", plate);
             }
-            String data = matcher.group(2);
-            switch (counter) {
-                case 3:
-                    plateOwner.setName(unescapeHtml(data));
-                    break;
-                case 4:
-                    plateOwner.setAddress(unescapeHtml(data));
-                    break;
-                case 5:
+
+            String dataName = matcher.group(1);
+            String dataValue = matcher.group(3);
+            if (dataName != null && dataValue != null) {
+                if (dataName.equals("Nom")) {
+                    plateOwner.setName(unescapeHtml(dataValue));
+                } else if (dataName.equals("Adresse")) {
+                    plateOwner.setAddress(unescapeHtml(dataValue));
+                } else if (dataName.equals("Complément")) {
+                    plateOwner.setAddressComplement(unescapeHtml(dataValue));
+                } else if (dataName.equals("Localité")) {
                     // Separate Zip code from town name
-                    String[] split = unescapeHtml(data).split(" ");
+                    String[] split = unescapeHtml(dataValue).split(" ");
                     try {
                         plateOwner.setZip(Integer.parseInt(split[0]));
                     } catch (NumberFormatException nfe) {
                         throw new PlateOwnerDataException("Invalid ZIP code '" + split[0] + "'.", plateOwner);
                     }
-                    plateOwner.setTown(unescapeHtml(data).substring(split[0].length() + 1));
-                    break;
+                    plateOwner.setTown(unescapeHtml(dataValue).substring(split[0].length() + 1));
+                }
             }
-
-            counter++;
         }
 
         // Check plate owner data

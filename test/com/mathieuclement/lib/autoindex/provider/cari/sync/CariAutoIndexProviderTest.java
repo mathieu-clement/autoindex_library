@@ -192,14 +192,14 @@ public class CariAutoIndexProviderTest {
         Assert.assertEquals(expectedVs1, actualVs1);
 
         // This test is interesting to see if HTML unescape worked
-        PlateOwner expectedVs2 = new PlateOwner("Defayes Eric", "Rte de l'Ecosse 7", "", 1907, "Saxon");
+        PlateOwner expectedVs2 = new PlateOwner("Defayes Eric", "Route de l'Ecosse 7", "", 1907, "Saxon");
         PlateOwner actualVs2 = valaisAutoIndexProvider.getPlateOwner(new Plate(22222, PlateType.AUTOMOBILE, cantonValais));
         Assert.assertEquals(expectedVs2, actualVs2);
     }
 
     @Test
     public void testValaisBateau() throws Exception {
-        PlateOwner expectedVsBateau1 = new PlateOwner("Brun Marielle", "Chemin Neuf", "", 1897, "Les Evouettes");
+        PlateOwner expectedVsBateau1 = new PlateOwner("Brun Marielle", "Chemin Neuf 43", "", 1897, "Les Evouettes");
         PlateOwner actualVsBateau1 = valaisAutoIndexProvider.getPlateOwner(new Plate(123, PlateType.BOAT, cantonValais));
         Assert.assertEquals(expectedVsBateau1, actualVsBateau1);
     }
