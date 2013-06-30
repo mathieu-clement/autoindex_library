@@ -5,7 +5,6 @@ import com.mathieuclement.lib.autoindex.plate.PlateOwner;
 import com.mathieuclement.lib.autoindex.plate.PlateOwnerDataException;
 import com.mathieuclement.lib.autoindex.plate.PlateType;
 import com.mathieuclement.lib.autoindex.provider.common.MyHttpClient;
-import com.mathieuclement.lib.autoindex.provider.common.MySSLSocketFactory;
 import com.mathieuclement.lib.autoindex.provider.common.captcha.CaptchaException;
 import com.mathieuclement.lib.autoindex.provider.common.captcha.event.AsyncAutoIndexProvider;
 import com.mathieuclement.lib.autoindex.provider.exception.PlateOwnerHiddenException;
@@ -19,12 +18,8 @@ import org.apache.http.client.CookieStore;
 import org.apache.http.client.HttpClient;
 import org.apache.http.client.entity.UrlEncodedFormEntity;
 import org.apache.http.client.protocol.ClientContext;
-import org.apache.http.conn.ClientConnectionManager;
-import org.apache.http.conn.scheme.Scheme;
-import org.apache.http.conn.scheme.SchemeRegistry;
-import org.apache.http.conn.ssl.SSLSocketFactory;
 import org.apache.http.impl.client.BasicCookieStore;
-import org.apache.http.impl.client.DefaultHttpClient;
+import org.apache.http.impl.client.DecompressingHttpClient;
 import org.apache.http.message.BasicHeader;
 import org.apache.http.message.BasicHttpEntityEnclosingRequest;
 import org.apache.http.message.BasicHttpRequest;
@@ -36,16 +31,11 @@ import org.apache.http.protocol.BasicHttpContext;
 import org.apache.http.protocol.HttpContext;
 import org.bouncycastle.jce.provider.BouncyCastleProvider;
 
-import javax.net.ssl.SSLContext;
-import javax.net.ssl.TrustManager;
-import javax.net.ssl.X509TrustManager;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.UnsupportedEncodingException;
 import java.security.Security;
-import java.security.cert.CertificateException;
-import java.security.cert.X509Certificate;
 import java.util.*;
 import java.util.logging.Logger;
 import java.util.regex.Matcher;
@@ -73,15 +63,15 @@ public abstract class AsyncCariAutoIndexProvider extends AsyncAutoIndexProvider 
     private Set<Header> getHttpHeaders() {
         Set<Header> headers = new LinkedHashSet<Header>();
 
-        headers.add(new BasicHeader("Content-Type", "application/x-www-form-urlencoded"));
-        headers.add(new BasicHeader("Accept-Charset", "utf-8"));
-        headers.add(new BasicHeader("Accept-Language", "fr"));
-        headers.add(new BasicHeader("Accept-Encoding", "gzip,deflate,sdch"));
-        headers.add(new BasicHeader("Connection", "keep-alive"));
-        headers.add(new BasicHeader("User-Agent", "Swiss-AutoIndex/0.1"));
-        headers.add(new BasicHeader("Referer", getCariOnlineFullUrl() + lookupOwnerPageName)); // spelling error on purpose as in the RFC
-        headers.add(new BasicHeader("Origin", getCariHttpHost().getSchemeName() + "://" + getCariHttpHostname()));
-        headers.add(getHostHeader());
+//        headers.add(new BasicHeader("Content-Type", "application/x-www-form-urlencoded"));
+//        headers.add(new BasicHeader("Accept-Charset", "utf-8"));
+//        headers.add(new BasicHeader("Accept-Language", "fr"));
+//        headers.add(new BasicHeader("Accept-Encoding", "gzip,deflate,sdch"));
+//        headers.add(new BasicHeader("Connection", "keep-alive"));
+//        headers.add(new BasicHeader("User-Agent", "Swiss-AutoIndex/0.1"));
+//        headers.add(new BasicHeader("Referer", getCariOnlineFullUrl() + lookupOwnerPageName)); // spelling error on purpose as in the RFC
+//        headers.add(new BasicHeader("Origin", getCariHttpHost().getSchemeName() + "://" + getCariHttpHostname()));
+//        headers.add(getHostHeader());
 
         return headers;
     }
@@ -118,32 +108,6 @@ public abstract class AsyncCariAutoIndexProvider extends AsyncAutoIndexProvider 
      */
     protected abstract String getCariOnlineFullUrl();
 
-    private HttpClient sslClient(HttpClient client) {
-        try {
-            X509TrustManager tm = new X509TrustManager() {
-                public void checkClientTrusted(X509Certificate[] xcs, String string) throws CertificateException {
-                }
-
-                public void checkServerTrusted(X509Certificate[] xcs, String string) throws CertificateException {
-                }
-
-                public X509Certificate[] getAcceptedIssuers() {
-                    return null;
-                }
-            };
-            SSLContext ctx = SSLContext.getInstance("TLS");
-            ctx.init(null, new TrustManager[]{tm}, null);
-            SSLSocketFactory ssf = new MySSLSocketFactory(ctx);
-            ssf.setHostnameVerifier(SSLSocketFactory.ALLOW_ALL_HOSTNAME_VERIFIER);
-            ClientConnectionManager ccm = client.getConnectionManager();
-            SchemeRegistry sr = ccm.getSchemeRegistry();
-            sr.register(new Scheme("https", ssf, 443));
-            return new DefaultHttpClient(ccm, client.getParams());
-        } catch (Exception ex) {
-            throw new RuntimeException(ex);
-        }
-    }
-
     protected void makeRequestBeforeCaptchaEntered(Plate plate) {
         HttpParams httpParams = new BasicHttpParams();
         httpParams.setParameter(CoreProtocolPNames.PROTOCOL_VERSION, HttpVersion.HTTP_1_1);
@@ -167,7 +131,7 @@ public abstract class AsyncCariAutoIndexProvider extends AsyncAutoIndexProvider 
                 if(!file.exists()) {
                     throw new RuntimeException("BKS file not found!");
                 }
-                httpClient = new MyHttpClient(new FileInputStream(file));
+                httpClient = new DecompressingHttpClient(new MyHttpClient(new FileInputStream(file))); // gzip support
             } catch (Exception e) {
                 throw new RuntimeException(e);
             }
