@@ -41,7 +41,7 @@ public class MyHttpClient extends DefaultHttpClient {
         try {
             KeyStore trusted = KeyStore.getInstance("BKS");
             try {
-                trusted.load(storeInputStream, "testtest".toCharArray());
+                trusted.load(storeInputStream, "keystorepass12345autoindexblabla".toCharArray());
             } finally {
                 storeInputStream.close();
             }

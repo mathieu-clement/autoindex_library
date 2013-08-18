@@ -10,16 +10,20 @@ import org.apache.http.*;
 import org.apache.http.client.CookieStore;
 import org.apache.http.client.HttpClient;
 import org.apache.http.client.entity.UrlEncodedFormEntity;
+import org.apache.http.client.methods.HttpGet;
+import org.apache.http.client.methods.HttpPost;
+import org.apache.http.client.methods.HttpUriRequest;
+import org.apache.http.client.params.ClientPNames;
+import org.apache.http.client.params.CookiePolicy;
 import org.apache.http.cookie.Cookie;
 import org.apache.http.impl.client.AbstractHttpClient;
 import org.apache.http.impl.client.DefaultHttpClient;
-import org.apache.http.message.BasicHttpEntityEnclosingRequest;
+import org.apache.http.message.BasicHeader;
 import org.apache.http.message.BasicNameValuePair;
 import org.apache.http.params.CoreProtocolPNames;
 import org.apache.http.params.HttpParams;
 import org.apache.http.protocol.BasicHttpContext;
 import org.apache.http.protocol.HttpContext;
-import org.apache.http.util.EntityUtils;
 import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
 import org.jsoup.nodes.Element;
@@ -39,7 +43,7 @@ import java.util.regex.Pattern;
 public class AsyncViacarAutoIndexProvider extends AsyncAutoIndexProvider {
 
     private static final String THIS_IS_THE_CAPTCHA = "THIS_IS_THE_CAPTCHA";
-    private final String resultUri = "/eindex/Result.aspx?Var=1";
+    private final String resultUri = "https://www.viacar.ch/eindex/Result.aspx?Var=1";
     private String cantonAbbr;
     private static Set<PlateType> supportedPlateTypes = new LinkedHashSet<PlateType>();
 
@@ -52,17 +56,16 @@ public class AsyncViacarAutoIndexProvider extends AsyncAutoIndexProvider {
 
     private DefaultHttpClient httpClient;
     private HttpContext httpContext;
-    private HttpRequest dummyPageViewRequest;
-    private HttpHost httpHost = new HttpHost("www.viacar.ch", 443, "https"); // Request has to be done with the
+    private HttpUriRequest dummyPageViewRequest;
     // correct name matching the Server certificate!
     private String captchaId = "";
     private CookieStore cookieStore;
-    private BasicHttpEntityEnclosingRequest captchaRequest;
+    private HttpPost captchaRequest;
     private List<NameValuePair> captchaPostParams;
     private List<NameValuePair> searchFormParams;
-    private BasicHttpEntityEnclosingRequest searchRequest;
+    private HttpPost searchRequest;
     private PlateOwner plateOwner;
-    private BasicHttpEntityEnclosingRequest resultRequest;
+    private HttpGet resultRequest;
     private String debugHtml; // TODO Remove
 
     public AsyncViacarAutoIndexProvider(String cantonAbbr) {
@@ -84,7 +87,12 @@ public class AsyncViacarAutoIndexProvider extends AsyncAutoIndexProvider {
                 HttpParams httpParams = httpClient.getParams();
                 httpParams.setParameter(CoreProtocolPNames.PROTOCOL_VERSION, HttpVersion.HTTP_1_1);
                 httpParams.setParameter(CoreProtocolPNames.ORIGIN_SERVER, "https://www.viacar.ch");
-                httpParams.setParameter("http.protocol.single-cookie-header", true);
+                httpParams.setParameter(CoreProtocolPNames.USER_AGENT,
+                        "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.22 (KHTML, like Gecko) " +
+                                "Ubuntu Chromium/25.0.1364.160 Chrome/25.0.1364.160 Safari/537.22");
+                httpParams.setParameter(ClientPNames.COOKIE_POLICY, CookiePolicy.BROWSER_COMPATIBILITY);
+                httpParams.setParameter(ClientPNames.DEFAULT_HEADERS, new ArrayList<Header>());
+                // httpParams.setParameter("http.protocol.single-cookie-header", true);
             } catch (Exception e) {
                 throw new RuntimeException(e);
             }
@@ -100,16 +108,16 @@ public class AsyncViacarAutoIndexProvider extends AsyncAutoIndexProvider {
         }
 
         // Load page a first time and get that session cookie! (+ hidden POST fields)
-        dummyPageViewRequest = new BasicHttpEntityEnclosingRequest("GET", getShortLoginUrl(), HttpVersion.HTTP_1_1);
+        dummyPageViewRequest = new HttpGet(getLoginUrl());
         if (cookieStore == null) {
-            cookieStore = ((AbstractHttpClient)httpClient).getCookieStore();
+            cookieStore = ((AbstractHttpClient) httpClient).getCookieStore();
         }
         //dummyPageViewRequest.setHeader(getHostHeader());
         for (Header header : getHttpHeaders("")) {
             dummyPageViewRequest.setHeader(header);
         }
         try {
-            HttpResponse dummyResponse = httpClient.execute(httpHost, dummyPageViewRequest, httpContext);
+            HttpResponse dummyResponse = httpClient.execute(dummyPageViewRequest, httpContext);
             StatusLine statusLine = dummyResponse.getStatusLine();
             if (statusLine.getStatusCode() != 200) {
                 firePlateRequestException(plate, new ProviderException("Bad status when doing the dummy page view request to get a session: " + statusLine.getStatusCode() + " " + statusLine.getReasonPhrase(), plate));
@@ -117,7 +125,7 @@ public class AsyncViacarAutoIndexProvider extends AsyncAutoIndexProvider {
             }
             captchaPostParams = makeFormParams(dummyResponse.getEntity().getContent(), "utf-8", getLoginUrl());
             captchaId = extractCaptchaId(debugHtml);
-            EntityUtils.consume(dummyResponse.getEntity());
+            //dummyResponse.getEntity().getContent().close();
             //printDebugHtml();
         } catch (IOException e) {
             firePlateRequestException(plate, new ProviderException("Could not do the dummy page view request to get a session.", e, plate));
@@ -158,7 +166,30 @@ public class AsyncViacarAutoIndexProvider extends AsyncAutoIndexProvider {
             }
         }
 
-        fireCaptchaCodeRequested(plate, generateCaptchaImageUrl(), httpClient, httpHost, httpContext,
+        /*
+        // Other requests done normally by browser:
+        List<String> dummyFiles = new LinkedList<String>();
+        // Autoindex.css hg-02.gif hg-01.gif logo-head.gif hg-grey22pix.gif
+        dummyFiles.add("Autoindex.css");
+        dummyFiles.add("Bilder/hg-02.gif");
+        dummyFiles.add("Bilder/hg-01.gif");
+        dummyFiles.add("Bilder/logo-head.gif");
+        dummyFiles.add("Bilder/hg-grey2pix.gif");
+        for (String dummyFile : dummyFiles) {
+            HttpGet httpGet = new HttpGet("https://www.viacar.ch/eindex/" + dummyFile);
+            try {
+                HttpResponse response = httpClient.execute(httpGet, httpContext);
+                response.getEntity().getContent().close();
+            } catch (IOException e) {
+                firePlateRequestException(plate, new ProviderException("Dummy request exception: " + dummyFile, e, plate));
+                return;
+            }
+        }
+        */
+
+        fireCaptchaCodeRequested(plate, generateCaptchaImageUrl(), httpClient, new HttpHost("www.viacar.ch", 443,
+                "https"),
+                httpContext,
                 "www.viacar.ch", this);
     }
 
@@ -199,12 +230,7 @@ public class AsyncViacarAutoIndexProvider extends AsyncAutoIndexProvider {
         return "https://www.viacar.ch/eindex/login.aspx?kanton=" + cantonAbbr;
     }
 
-    private String getShortLoginUrl() {
-        return "/eindex/login.aspx?kanton=" + cantonAbbr;
-        //return getLoginUrl();
-    }
-
-    private static final int MAX_REQUESTS = 5;
+    public int MAX_REQUESTS = 5;
 
     private Set<Header> getHttpHeaders(String referer) {
         Set<Header> headers = new LinkedHashSet<Header>();
@@ -223,11 +249,11 @@ public class AsyncViacarAutoIndexProvider extends AsyncAutoIndexProvider {
 ////        headers.add(new BasicHeader("Accept-Encoding", "gzip,deflate,dsch"));
 //        headers.add(new BasicHeader("Accept-Encoding", "deflate"));
 //        headers.add(new BasicHeader("Connection", "keep-alive"));
-//        headers.add(new BasicHeader("Origin", "https://www.viacar.ch"));
+        headers.add(new BasicHeader("Origin", "https://www.viacar.ch"));
 //        //noinspection SpellCheckingInspection
-//        if (!"".equals(referer)) {
-//            headers.add(new BasicHeader("Referer", referer));
-//        }
+        if (!"".equals(referer)) {
+            headers.add(new BasicHeader("Referer", referer));
+        }
 
         return headers;
     }
@@ -252,7 +278,7 @@ public class AsyncViacarAutoIndexProvider extends AsyncAutoIndexProvider {
 
         HttpResponse captchaResponse;
         try {
-            captchaResponse = httpClient.execute(httpHost, captchaRequest, httpContext);
+            captchaResponse = httpClient.execute(captchaRequest, httpContext);
             if (captchaResponse.getStatusLine().getStatusCode() != 200) {
                 firePlateRequestException(plate, new ProviderException("Got status " + captchaResponse.getStatusLine()
                         .getStatusCode()
@@ -266,7 +292,7 @@ public class AsyncViacarAutoIndexProvider extends AsyncAutoIndexProvider {
         }
 
         try {
-            BasicHttpEntityEnclosingRequest searchRequest = makeSearchRequest(captchaResponse, plate);
+            searchRequest = makeSearchRequest(captchaResponse, plate);
 
             /* Check not back on login page */
             for (NameValuePair searchFormParam : searchFormParams) {
@@ -286,10 +312,10 @@ public class AsyncViacarAutoIndexProvider extends AsyncAutoIndexProvider {
                 throw new RuntimeException("Unavailable message!");
             }
 
-            EntityUtils.consume(captchaResponse.getEntity());
+            //captchaResponse.getEntity().getContent().close();
 
             // Perform search
-            HttpResponse searchResponse = httpClient.execute(httpHost, searchRequest, httpContext);
+            HttpResponse searchResponse = httpClient.execute(searchRequest, httpContext);
             if (searchResponse.getStatusLine().getStatusCode() != 200 && searchResponse.getStatusLine().getStatusCode
                     () != 302) {
                 firePlateRequestException(plate, new ProviderException("Got status " + searchResponse.getStatusLine()
@@ -297,14 +323,12 @@ public class AsyncViacarAutoIndexProvider extends AsyncAutoIndexProvider {
                         + " from server when executing request to get plate owner of plate " + plate, plate));
                 return;
             }
-//            searchResponse.getEntity().getContent().close();
-//            captchaResponse.getEntity().getContent().close();
 
-            EntityUtils.consume(searchResponse.getEntity());
+            //searchResponse.getEntity().getContent().close();
 
             // Execute request for the real result page
-            BasicHttpEntityEnclosingRequest resultRequest = makeResultRequest();
-            HttpResponse resultResponse = httpClient.execute(httpHost, resultRequest, httpContext);
+            resultRequest = makeResultRequest();
+            HttpResponse resultResponse = httpClient.execute(resultRequest, httpContext);
 
             // Extract the plate owner from the HTML response
             plateOwner = htmlToPlateOwner(resultResponse, resultUri, plate);
@@ -323,7 +347,7 @@ public class AsyncViacarAutoIndexProvider extends AsyncAutoIndexProvider {
     }
 
     private void printDebugHtml() {
-        System.out.println(debugHtml);
+//        System.out.println(debugHtml);
         System.out.println("----------------------------------------------------------------------------------------");
     }
 
@@ -378,16 +402,15 @@ public class AsyncViacarAutoIndexProvider extends AsyncAutoIndexProvider {
         plateTypeMapping.put("Landw. Motorfahrzeug", PlateType.AGRICULTURAL);
     }
 
-    private BasicHttpEntityEnclosingRequest makeResultRequest() {
-        resultRequest = new BasicHttpEntityEnclosingRequest("GET",
-                resultUri, HttpVersion.HTTP_1_1);
+    private HttpGet makeResultRequest() {
+        resultRequest = new HttpGet(resultUri);
         for (Header header : getHttpHeaders("https://www.viacar.ch/eindex/Search.aspx?kanton=" + cantonAbbr)) {
             resultRequest.setHeader(header);
         }
         return resultRequest;
     }
 
-    private BasicHttpEntityEnclosingRequest makeSearchRequest(HttpResponse captchaResponse, Plate plate) throws IOException {
+    private HttpPost makeSearchRequest(HttpResponse captchaResponse, Plate plate) throws IOException {
         searchFormParams = makeFormParams(captchaResponse.getEntity().getContent(),
                 "utf-8", getLoginUrl());
 
@@ -409,8 +432,7 @@ public class AsyncViacarAutoIndexProvider extends AsyncAutoIndexProvider {
         searchFormParams.add(new BasicNameValuePair("TextBoxKontrollschild", Integer.toString(plate.getNumber())));
 
         if (searchRequest == null) {
-            searchRequest = new BasicHttpEntityEnclosingRequest("POST", "/eindex/Search.aspx?kanton=" + cantonAbbr,
-                    HttpVersion.HTTP_1_1);
+            searchRequest = new HttpPost("https://www.viacar.ch/eindex/Search.aspx?kanton=" + cantonAbbr);
             for (Header header : getHttpHeaders(getLoginUrl())) {
                 searchRequest.setHeader(header);
             }
@@ -420,9 +442,9 @@ public class AsyncViacarAutoIndexProvider extends AsyncAutoIndexProvider {
     }
 
     // Make the Captcha page request used to do the search on the response page
-    private BasicHttpEntityEnclosingRequest makeCaptchaRequest(String captchaCode) throws UnsupportedEncodingException {
+    private HttpPost makeCaptchaRequest(String captchaCode) throws UnsupportedEncodingException {
         if (captchaRequest == null) {
-            captchaRequest = new BasicHttpEntityEnclosingRequest("POST", getShortLoginUrl(), HttpVersion.HTTP_1_1);
+            captchaRequest = new HttpPost(getLoginUrl());
             for (Header header : getHttpHeaders(getLoginUrl())) {
                 captchaRequest.setHeader(header);
             }

@@ -165,6 +165,7 @@ public class AsyncViacarAutoIndexProviderTest {
                 } catch (Exception e) {
                     System.err.println("Test exception: " + e.getMessage());
                     e.printStackTrace();
+                    httpClient.getConnectionManager().shutdown();
                     System.exit(1);
                 }
             }

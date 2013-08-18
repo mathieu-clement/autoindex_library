@@ -19,7 +19,6 @@ import org.apache.http.client.HttpClient;
 import org.apache.http.client.entity.UrlEncodedFormEntity;
 import org.apache.http.client.protocol.ClientContext;
 import org.apache.http.impl.client.BasicCookieStore;
-import org.apache.http.impl.client.DecompressingHttpClient;
 import org.apache.http.message.BasicHeader;
 import org.apache.http.message.BasicHttpEntityEnclosingRequest;
 import org.apache.http.message.BasicHttpRequest;
@@ -131,7 +130,9 @@ public abstract class AsyncCariAutoIndexProvider extends AsyncAutoIndexProvider 
                 if(!file.exists()) {
                     throw new RuntimeException("BKS file not found!");
                 }
-                httpClient = new DecompressingHttpClient(new MyHttpClient(new FileInputStream(file))); // gzip support
+                //httpClient = new DecompressingHttpClient(new MyHttpClient(new FileInputStream(file))); // gzip
+                // support
+                httpClient = new MyHttpClient(new FileInputStream(file));
             } catch (Exception e) {
                 throw new RuntimeException(e);
             }
