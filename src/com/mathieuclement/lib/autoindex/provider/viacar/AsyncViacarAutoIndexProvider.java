@@ -5,6 +5,7 @@ import com.mathieuclement.lib.autoindex.plate.PlateOwner;
 import com.mathieuclement.lib.autoindex.plate.PlateType;
 import com.mathieuclement.lib.autoindex.provider.common.captcha.CaptchaException;
 import com.mathieuclement.lib.autoindex.provider.common.captcha.event.AsyncAutoIndexProvider;
+import com.mathieuclement.lib.autoindex.provider.exception.PlateOwnerNotFoundException;
 import com.mathieuclement.lib.autoindex.provider.exception.ProviderException;
 import org.apache.http.*;
 import org.apache.http.client.CookieStore;
@@ -112,10 +113,6 @@ public class AsyncViacarAutoIndexProvider extends AsyncAutoIndexProvider {
         if (cookieStore == null) {
             cookieStore = ((AbstractHttpClient) httpClient).getCookieStore();
         }
-        //dummyPageViewRequest.setHeader(getHostHeader());
-        for (Header header : getHttpHeaders("")) {
-            dummyPageViewRequest.setHeader(header);
-        }
         try {
             HttpResponse dummyResponse = httpClient.execute(dummyPageViewRequest, httpContext);
             StatusLine statusLine = dummyResponse.getStatusLine();
@@ -144,48 +141,26 @@ public class AsyncViacarAutoIndexProvider extends AsyncAutoIndexProvider {
                     break;
                 }
             }
-            if (viaCookie == null) {
-                throw new RuntimeException("Cookie " + cookieName + " was not found.");
-            }
+            if (viaCookie != null) {
 
-            // The cookie has a value such as "Anzahl=0&Date=29.06.2013&de-CH=de-CH"
-            // Number of request so far
-            int requests = -1;
-            Matcher matcher = Pattern.compile(".*Anzahl=(\\d+).*").matcher(viaCookie.getValue());
-            if (matcher != null) {
-                matcher.find();
-                requests = Integer.valueOf(matcher.group(1));
-            }
-            if (requests == MAX_REQUESTS) {
-                cookieStore.clear();
-                cookieStore = null;
-                dummyPageViewRequest = null;
-                // Call itself to regenerate cookie store and do a dummy page request
-                makeRequestBeforeCaptchaEntered(plate, httpClient);
-                return;
+                // The cookie has a value such as "Anzahl=0&Date=29.06.2013&de-CH=de-CH"
+                // Number of request so far
+                int requests = -1;
+                Matcher matcher = Pattern.compile(".*Anzahl=(\\d+).*").matcher(viaCookie.getValue());
+                if (matcher != null) {
+                    matcher.find();
+                    requests = Integer.valueOf(matcher.group(1));
+                }
+                if (requests == MAX_REQUESTS) {
+                    cookieStore.clear();
+                    cookieStore = null;
+                    dummyPageViewRequest = null;
+                    // Call itself to regenerate cookie store and do a dummy page request
+                    makeRequestBeforeCaptchaEntered(plate, httpClient);
+                    return;
+                }
             }
         }
-
-        /*
-        // Other requests done normally by browser:
-        List<String> dummyFiles = new LinkedList<String>();
-        // Autoindex.css hg-02.gif hg-01.gif logo-head.gif hg-grey22pix.gif
-        dummyFiles.add("Autoindex.css");
-        dummyFiles.add("Bilder/hg-02.gif");
-        dummyFiles.add("Bilder/hg-01.gif");
-        dummyFiles.add("Bilder/logo-head.gif");
-        dummyFiles.add("Bilder/hg-grey2pix.gif");
-        for (String dummyFile : dummyFiles) {
-            HttpGet httpGet = new HttpGet("https://www.viacar.ch/eindex/" + dummyFile);
-            try {
-                HttpResponse response = httpClient.execute(httpGet, httpContext);
-                response.getEntity().getContent().close();
-            } catch (IOException e) {
-                firePlateRequestException(plate, new ProviderException("Dummy request exception: " + dummyFile, e, plate));
-                return;
-            }
-        }
-        */
 
         fireCaptchaCodeRequested(plate, generateCaptchaImageUrl(), httpClient, new HttpHost("www.viacar.ch", 443,
                 "https"),
@@ -208,7 +183,6 @@ public class AsyncViacarAutoIndexProvider extends AsyncAutoIndexProvider {
         Document doc = Jsoup.parse(content, encoding, pageUri);
         debugHtml = doc.outerHtml();
         // DO NOT CALL NORMALIZE! It will delete the style attribute we use to detect where is the captcha.
-        printDebugHtml();
         Elements elements = doc.select("input");
         for (Element element : elements) {
             // Add element. For the Captcha one, we cheat and use a "THIS_IS_THE_CAPTCHA" value
@@ -230,27 +204,12 @@ public class AsyncViacarAutoIndexProvider extends AsyncAutoIndexProvider {
         return "https://www.viacar.ch/eindex/login.aspx?kanton=" + cantonAbbr;
     }
 
-    public int MAX_REQUESTS = 5;
+    public int MAX_REQUESTS = 3;
 
     private Set<Header> getHttpHeaders(String referer) {
         Set<Header> headers = new LinkedHashSet<Header>();
-
-        //headers.add(new BasicHeader("User-Agent", "Swiss-AutoIndex/0.1"));
-
-//        headers.add(new BasicHeader("Host", "www.viacar.ch"));
-//        headers.add(new BasicHeader("User-Agent",
-//                "Mozilla/5.0 (X11; Ubuntu; Linux x86_64; rv:21.0) Gecko/20100101 Firefox/21.0"));
-//        headers.add(new BasicHeader("Cache-Control", "max-age=0"));
-//        headers.add(new BasicHeader("Content-Type", "application/x-www-form-urlencoded"));
-//        //headers.add(new BasicHeader("Content-Length", "1268"));
-//        headers.add(new BasicHeader("Accept-Charset", "ISO-8859-1,utf-8;q=0.7,*;q=0.3"));
-//        headers.add(new BasicHeader("Accept", "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8"));
-//        headers.add(new BasicHeader("Accept-Language", "en-US,en;q=0.5"));
-////        headers.add(new BasicHeader("Accept-Encoding", "gzip,deflate,dsch"));
-//        headers.add(new BasicHeader("Accept-Encoding", "deflate"));
-//        headers.add(new BasicHeader("Connection", "keep-alive"));
         headers.add(new BasicHeader("Origin", "https://www.viacar.ch"));
-//        //noinspection SpellCheckingInspection
+        //noinspection SpellCheckingInspection
         if (!"".equals(referer)) {
             headers.add(new BasicHeader("Referer", referer));
         }
@@ -258,12 +217,10 @@ public class AsyncViacarAutoIndexProvider extends AsyncAutoIndexProvider {
         return headers;
     }
 
-    public CookieStore getCookieStore() {
-        return cookieStore;
-    }
-
     @Override
     protected void doRequestAfterCaptchaEntered(String captchaCode, Plate plate, HttpClient httpClient, HttpContext httpContext) {
+        printProgress(0, 30);
+
         // Send captcha
         try {
             captchaRequest = makeCaptchaRequest(captchaCode);
@@ -272,13 +229,10 @@ public class AsyncViacarAutoIndexProvider extends AsyncAutoIndexProvider {
             return;
         }
 
-//        for (Cookie cookie : cookieStore.getCookies()) {
-//            captchaRequest.addHeader("Cookie", cookie.getName() + "=" + cookie.getValue());
-//        }
-
         HttpResponse captchaResponse;
         try {
             captchaResponse = httpClient.execute(captchaRequest, httpContext);
+            printProgress(10, 30);
             if (captchaResponse.getStatusLine().getStatusCode() != 200) {
                 firePlateRequestException(plate, new ProviderException("Got status " + captchaResponse.getStatusLine()
                         .getStatusCode()
@@ -308,14 +262,18 @@ public class AsyncViacarAutoIndexProvider extends AsyncAutoIndexProvider {
             }
             // Check this isn't the / (root) page https://www.viacar.ch/
             if (debugHtml.contains("Diese Seite oder dieser Service ist im Moment")) {
-                printDebugHtml();
                 throw new RuntimeException("Unavailable message!");
             }
 
-            //captchaResponse.getEntity().getContent().close();
+            try {
+                captchaResponse.getEntity().getContent().close();
+            } catch (Throwable t) {
+                // ignore
+            }
 
             // Perform search
             HttpResponse searchResponse = httpClient.execute(searchRequest, httpContext);
+            printProgress(20, 30);
             if (searchResponse.getStatusLine().getStatusCode() != 200 && searchResponse.getStatusLine().getStatusCode
                     () != 302) {
                 firePlateRequestException(plate, new ProviderException("Got status " + searchResponse.getStatusLine()
@@ -324,11 +282,16 @@ public class AsyncViacarAutoIndexProvider extends AsyncAutoIndexProvider {
                 return;
             }
 
-            //searchResponse.getEntity().getContent().close();
+            try {
+                searchResponse.getEntity().getContent().close();
+            } catch (Throwable t) {
+                // ignore
+            }
 
             // Execute request for the real result page
             resultRequest = makeResultRequest();
             HttpResponse resultResponse = httpClient.execute(resultRequest, httpContext);
+            printProgress(30, 30);
 
             // Extract the plate owner from the HTML response
             plateOwner = htmlToPlateOwner(resultResponse, resultUri, plate);
@@ -336,22 +299,34 @@ public class AsyncViacarAutoIndexProvider extends AsyncAutoIndexProvider {
 
             // Close connection and release resources
             // Disabled as a workaround for "java.lang.IllegalStateException: Connection manager has been shut down"
-            //httpClient.getConnectionManager().shutdown();
+            try {
+                httpClient.getConnectionManager().shutdown();
+            } catch (Throwable t) {
+                // ignore
+            }
 
             firePlateOwnerFound(plate, plateOwner);
         } catch (IOException e) {
             firePlateRequestException(plate, new ProviderException("Request exception", e, plate)
             );
             return;
+        } catch (PlateOwnerNotFoundException e) {
+            firePlateRequestException(plate, e);
         }
     }
 
-    private void printDebugHtml() {
-//        System.out.println(debugHtml);
-        System.out.println("----------------------------------------------------------------------------------------");
+    private void printProgress(int step, int numberOfSteps) {
+        System.out.print("\r|");
+        for (int i = 0; i < step; i++) {
+            System.out.print("*");
+        }
+        for (int i = 0; i < numberOfSteps - step; i++) {
+            System.out.print(" ");
+        }
+        System.out.println("|");
     }
 
-    private PlateOwner htmlToPlateOwner(HttpResponse resultResponse, String baseUri, Plate plate) throws IOException {
+    private PlateOwner htmlToPlateOwner(HttpResponse resultResponse, String baseUri, Plate plate) throws IOException, PlateOwnerNotFoundException {
         Document doc = Jsoup.parse(resultResponse.getEntity().getContent(),
                 "utf-8", baseUri);
         debugHtml = doc.normalise().outerHtml();
@@ -368,6 +343,9 @@ public class AsyncViacarAutoIndexProvider extends AsyncAutoIndexProvider {
 
         for (Element element : elements) {
             String text = element.text();
+            System.out.println();
+            System.out.println("Text: \n" + text);
+            System.out.println();
             Matcher matcher = pattern.matcher(text);
             if (matcher != null) {
                 while (matcher.find()) {
@@ -384,7 +362,7 @@ public class AsyncViacarAutoIndexProvider extends AsyncAutoIndexProvider {
             }
         }
 
-        throw new ParseException("Could not parse result page.");
+        throw new PlateOwnerNotFoundException("Not found or page could not be parsed.", plate);
     }
 
     private boolean artMatches(String art, PlateType type) {
@@ -420,7 +398,6 @@ public class AsyncViacarAutoIndexProvider extends AsyncAutoIndexProvider {
 
         // Remove param with name "TextBoxKontrollschild" if it exists
         if (searchFormParams.isEmpty()) {
-            printDebugHtml();
             throw new RuntimeException("Bad page (expected the search page).");
         }
 
