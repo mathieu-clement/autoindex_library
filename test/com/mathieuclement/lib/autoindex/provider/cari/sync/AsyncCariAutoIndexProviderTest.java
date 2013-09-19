@@ -4,7 +4,7 @@ import com.mathieuclement.lib.autoindex.canton.Canton;
 import com.mathieuclement.lib.autoindex.plate.Plate;
 import com.mathieuclement.lib.autoindex.plate.PlateOwner;
 import com.mathieuclement.lib.autoindex.plate.PlateType;
-import com.mathieuclement.lib.autoindex.provider.cari.async.AsyncCariAutoIndexProvider;
+import com.mathieuclement.lib.autoindex.provider.cari.async.AsyncBaselLandAutoIndexProvider;
 import com.mathieuclement.lib.autoindex.provider.cari.async.AsyncFribourgAutoIndexProvider;
 import com.mathieuclement.lib.autoindex.provider.common.captcha.event.AsyncAutoIndexProvider;
 import com.mathieuclement.lib.autoindex.provider.common.captcha.event.CaptchaListener;
@@ -33,18 +33,22 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 
 public class AsyncCariAutoIndexProviderTest {
-    private AsyncCariAutoIndexProvider fribourgAutoIndexProvider;
-    private Canton cantonFribourg;
+//    private AsyncCariAutoIndexProvider fribourgAutoIndexProvider;
+//    private Canton cantonFribourg;
 
     @Before
     public void setUp() throws Exception {
-        fribourgAutoIndexProvider = new AsyncFribourgAutoIndexProvider();
 
-        cantonFribourg = new Canton("FR", true, fribourgAutoIndexProvider);
     }
 
     @Test
     public void testWithDialog() throws Exception {
+        Canton cantonFribourg = new Canton("FR", true, new AsyncFribourgAutoIndexProvider());
+        Canton cantonBaselLand = new Canton("BL", true, new AsyncBaselLandAutoIndexProvider());
+        openDiag(cantonBaselLand);
+    }
+
+    public void openDiag(final Canton canton) throws Exception {
 
         // Request on another thread
         // Main thread will be AWT-Thread or similar
@@ -64,7 +68,7 @@ public class AsyncCariAutoIndexProviderTest {
         plateNumberTextField.addActionListener(new ActionListener() {
             @Override
             public void actionPerformed(ActionEvent e) {
-                final Canton selectedCanton = cantonFribourg;
+                final Canton selectedCanton = canton;
 
                 final AsyncAutoIndexProvider asyncAutoIndexProvider = selectedCanton.getAsyncAutoIndexProvider();
                 new Thread(new Runnable() {
@@ -85,7 +89,7 @@ public class AsyncCariAutoIndexProviderTest {
         });
         mainPanel.add(plateNumberTextField);
 
-        cantonFribourg.getAsyncAutoIndexProvider().addListener(new CaptchaListener() {
+        canton.getAsyncAutoIndexProvider().addListener(new CaptchaListener() {
             private void generateCaptchaImage(JLabel imageLabel, AsyncAutoIndexProvider provider, HttpClient httpClient, HttpContext httpContext) throws IOException {
                 System.out.println("Downloading image...");
                 imageLabel.setText("Refreshing captcha...");
@@ -125,7 +129,7 @@ public class AsyncCariAutoIndexProviderTest {
                         public void mouseClicked(MouseEvent e) {
                             if (e.getClickCount() == 2) {
                                 try {
-                                    generateCaptchaImage(imageLabel, cantonFribourg.getAsyncAutoIndexProvider(), httpClient, httpContext);
+                                    generateCaptchaImage(imageLabel, canton.getAsyncAutoIndexProvider(), httpClient, httpContext);
                                 } catch (IOException ioe) {
                                     ioe.printStackTrace();
                                 }
@@ -158,7 +162,7 @@ public class AsyncCariAutoIndexProviderTest {
 
                     System.out.println("User entered '" + captchaCode[0] + "' as Captcha code.");
 
-                    cantonFribourg.getAsyncAutoIndexProvider().pushCaptchaCode(captchaCode[0], plate, httpClient, httpContext);
+                    canton.getAsyncAutoIndexProvider().pushCaptchaCode(captchaCode[0], plate, httpClient, httpContext);
 
                 } catch (IOException e) {
                     System.err.println("Failed to download or open captcha image");
@@ -172,7 +176,7 @@ public class AsyncCariAutoIndexProviderTest {
             }
         });
 
-        cantonFribourg.getAsyncAutoIndexProvider().addListener(new PlateRequestListener() {
+        canton.getAsyncAutoIndexProvider().addListener(new PlateRequestListener() {
             @Override
             public void onPlateOwnerFound(Plate plate, PlateOwner plateOwner) {
                 plateNumberTextField.setEnabled(true);
@@ -189,7 +193,7 @@ public class AsyncCariAutoIndexProviderTest {
             }
         });
 
-        requestDialog.setTitle("Enter 'FR' number and press 'Enter'");
+        requestDialog.setTitle("Enter '" + canton.getAbbreviation() + "' number and press 'Enter'");
         requestDialog.setPreferredSize(new Dimension(350, 50));
         requestDialog.pack();
         requestDialog.setLocationRelativeTo(null);
