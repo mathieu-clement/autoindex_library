@@ -107,7 +107,7 @@ public abstract class AsyncCariAutoIndexProvider extends AsyncAutoIndexProvider 
      */
     protected abstract String getCariOnlineFullUrl();
 
-    protected void makeRequestBeforeCaptchaEntered(Plate plate) {
+    protected void makeRequestBeforeCaptchaEntered(Plate plate) throws ProviderException {
         HttpParams httpParams = new BasicHttpParams();
         httpParams.setParameter(CoreProtocolPNames.PROTOCOL_VERSION, HttpVersion.HTTP_1_1);
         if (httpClient == null) {
@@ -140,7 +140,7 @@ public abstract class AsyncCariAutoIndexProvider extends AsyncAutoIndexProvider 
         makeRequestBeforeCaptchaEntered(plate, httpClient);
     }
 
-    protected void makeRequestBeforeCaptchaEntered(Plate plate, HttpClient httpClient) {
+    protected void makeRequestBeforeCaptchaEntered(Plate plate, HttpClient httpClient) throws ProviderException {
 
         // HTTP handling
         if (httpContext == null) {
@@ -274,7 +274,8 @@ public abstract class AsyncCariAutoIndexProvider extends AsyncAutoIndexProvider 
 
     private static final Pattern plateOwnerPattern = Pattern.compile("<td class='libelle'>(.+)\\s*</td>\\s+<td( nowrap)?>\\s*(.+)\\s*</td>");
 
-    private PlateOwner htmlToPlateOwner(HttpResponse response, Plate plate) throws IOException, PlateOwnerDataException, CaptchaException, ProviderException, PlateOwnerNotFoundException, PlateOwnerHiddenException {
+    protected PlateOwner htmlToPlateOwner(HttpResponse response, Plate plate) throws IOException, PlateOwnerDataException,
+            CaptchaException, ProviderException, PlateOwnerNotFoundException, PlateOwnerHiddenException {
         htmlPage = ResponseUtils.toString(response);
 
         // Check presence of warning (shown on Fribourg webpage)
@@ -314,7 +315,6 @@ public abstract class AsyncCariAutoIndexProvider extends AsyncAutoIndexProvider 
 
         Matcher matcher = plateOwnerPattern.matcher(htmlPage);
 
-        byte counter = 0;
         while (matcher.find()) {
             if (matcher.group(0).contains("checkField") || matcher.group(0).contains("Captcha Code generation error")) {
                 throw new ProviderException("Something went bad because we were presented the form page again!", plate);
@@ -349,7 +349,7 @@ public abstract class AsyncCariAutoIndexProvider extends AsyncAutoIndexProvider 
         return plateOwner1;
     }
 
-    private String unescapeHtml(String escapedHtml) {
+    protected String unescapeHtml(String escapedHtml) {
         return StringEscapeUtils.unescapeHtml4(escapedHtml);
     }
 

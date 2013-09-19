@@ -80,7 +80,7 @@ public class AsyncViacarAutoIndexProvider extends AsyncAutoIndexProvider {
     }
 
     @Override
-    protected void makeRequestBeforeCaptchaEntered(Plate plate) {
+    protected void makeRequestBeforeCaptchaEntered(Plate plate) throws ProviderException {
         if (httpClient == null) {
             try {
                 // httpClient = new DecompressingHttpClient(new DefaultHttpClient()); // for gzip
@@ -102,7 +102,7 @@ public class AsyncViacarAutoIndexProvider extends AsyncAutoIndexProvider {
     }
 
     @Override
-    protected void makeRequestBeforeCaptchaEntered(Plate plate, HttpClient httpClient) {
+    protected void makeRequestBeforeCaptchaEntered(Plate plate, HttpClient httpClient) throws ProviderException {
         // HTTP handling
         if (httpContext == null) {
             httpContext = new BasicHttpContext();
@@ -218,7 +218,7 @@ public class AsyncViacarAutoIndexProvider extends AsyncAutoIndexProvider {
     }
 
     @Override
-    protected void doRequestAfterCaptchaEntered(String captchaCode, Plate plate, HttpClient httpClient, HttpContext httpContext) {
+    protected void doRequestAfterCaptchaEntered(String captchaCode, Plate plate, HttpClient httpClient, HttpContext httpContext) throws ProviderException {
         printProgress(0, 30);
 
         // Send captcha
@@ -258,12 +258,17 @@ public class AsyncViacarAutoIndexProvider extends AsyncAutoIndexProvider {
             }
             // Check we were not discovered
             if (debugHtml.contains("Bitte rufen Sie den Autoindex")) {
-                throw new RuntimeException("Not well emulated. It tells us we're not on the autoindex website!");
+                throw new ProviderException("Not well emulated. It tells us we're not on the autoindex website!", plate);
             }
             // Check this isn't the / (root) page https://www.viacar.ch/
             if (debugHtml.contains("Diese Seite oder dieser Service ist im Moment")) {
-                throw new RuntimeException("Unavailable message!");
+                throw new ProviderException("Unavailable message!", plate);
             }
+            // Check no timeout
+            if (debugHtml.contains("Die Zeit ist abgelaufen, bitte neu anmelden.")) {
+                throw new ProviderException("Time out from provider", plate);
+            }
+
 
             try {
                 captchaResponse.getEntity().getContent().close();

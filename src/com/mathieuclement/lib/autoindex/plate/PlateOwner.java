@@ -84,7 +84,7 @@ public class PlateOwner {
         // TODO Enable when ready
 //        checkName();
 //        checkAddress();
-        checkZip();
+//        checkZip();
 //        checkTown();
     }
 

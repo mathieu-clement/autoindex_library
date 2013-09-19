@@ -5,6 +5,7 @@ import com.mathieuclement.lib.autoindex.plate.PlateOwner;
 import com.mathieuclement.lib.autoindex.plate.PlateType;
 import com.mathieuclement.lib.autoindex.provider.common.AutoIndexProvider;
 import com.mathieuclement.lib.autoindex.provider.exception.PlateRequestException;
+import com.mathieuclement.lib.autoindex.provider.exception.ProviderException;
 import org.apache.http.HttpHost;
 import org.apache.http.client.HttpClient;
 import org.apache.http.protocol.HttpContext;
@@ -25,7 +26,7 @@ public abstract class AsyncAutoIndexProvider {
      *
      * @param plate Requested plate
      */
-    public final void requestPlateOwner(Plate plate) {
+    public final void requestPlateOwner(Plate plate) throws ProviderException {
         makeRequestBeforeCaptchaEntered(plate);
     }
 
@@ -35,7 +36,7 @@ public abstract class AsyncAutoIndexProvider {
      * @param plate      Requested plate
      * @param httpClient your own custom version of HttpClient
      */
-    public final void requestPlateOwner(Plate plate, HttpClient httpClient) {
+    public final void requestPlateOwner(Plate plate, HttpClient httpClient) throws ProviderException {
         makeRequestBeforeCaptchaEntered(plate, httpClient);
     }
 
@@ -55,7 +56,7 @@ public abstract class AsyncAutoIndexProvider {
         plateRequestListeners.remove(listener);
     }
 
-    public final void pushCaptchaCode(String captchaCode, Plate plate, HttpClient httpClient, HttpContext httpContext) {
+    public final void pushCaptchaCode(String captchaCode, Plate plate, HttpClient httpClient, HttpContext httpContext) throws ProviderException {
         doRequestAfterCaptchaEntered(captchaCode, plate, httpClient, httpContext);
     }
 
@@ -73,7 +74,7 @@ public abstract class AsyncAutoIndexProvider {
 
     protected final void fireCaptchaCodeRequested(Plate plate, String captchaImageUrl,
                                                   HttpClient httpClient, HttpHost httpHost, HttpContext httpContext, String httpHostHeaderValue,
-                                                  AsyncAutoIndexProvider provider) {
+                                                  AsyncAutoIndexProvider provider) throws ProviderException {
         for (CaptchaListener listener : captchaListeners) {
             listener.onCaptchaCodeRequested(plate, captchaImageUrl, httpClient, httpHost, httpContext, httpHostHeaderValue, provider);
         }
@@ -85,11 +86,11 @@ public abstract class AsyncAutoIndexProvider {
         }
     }
 
-    protected abstract void makeRequestBeforeCaptchaEntered(Plate plate);
+    protected abstract void makeRequestBeforeCaptchaEntered(Plate plate) throws ProviderException;
 
-    protected abstract void makeRequestBeforeCaptchaEntered(Plate plate, HttpClient httpClient);
+    protected abstract void makeRequestBeforeCaptchaEntered(Plate plate, HttpClient httpClient) throws ProviderException;
 
-    protected abstract void doRequestAfterCaptchaEntered(String captchaCode, Plate plate, HttpClient httpClient, HttpContext httpContext);
+    protected abstract void doRequestAfterCaptchaEntered(String captchaCode, Plate plate, HttpClient httpClient, HttpContext httpContext) throws ProviderException;
 
     public abstract String generateCaptchaImageUrl();
 

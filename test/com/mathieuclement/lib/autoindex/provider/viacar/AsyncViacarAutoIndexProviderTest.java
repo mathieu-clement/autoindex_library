@@ -8,6 +8,7 @@ import com.mathieuclement.lib.autoindex.provider.common.captcha.event.AsyncAutoI
 import com.mathieuclement.lib.autoindex.provider.common.captcha.event.CaptchaListener;
 import com.mathieuclement.lib.autoindex.provider.common.captcha.event.PlateRequestListener;
 import com.mathieuclement.lib.autoindex.provider.exception.PlateRequestException;
+import com.mathieuclement.lib.autoindex.provider.exception.ProviderException;
 import org.apache.http.HttpHost;
 import org.apache.http.HttpResponse;
 import org.apache.http.HttpVersion;
@@ -77,7 +78,11 @@ public class AsyncViacarAutoIndexProviderTest {
                         int plateNumber = Integer.parseInt(plateNumberTextField.getText());
                         plateNumberTextField.setText("Processing " + plateNumberTextField.getText() + "... Please wait.");
                         plateNumberTextField.setEnabled(false);
-                        asyncAutoIndexProvider.requestPlateOwner(new Plate(plateNumber, PlateType.AUTOMOBILE, selectedCanton));
+                        try {
+                            asyncAutoIndexProvider.requestPlateOwner(new Plate(plateNumber, PlateType.AUTOMOBILE, selectedCanton));
+                        } catch (ProviderException e1) {
+                            e1.printStackTrace();
+                        }
                     }
                 }).start();
             }

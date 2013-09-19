@@ -10,6 +10,7 @@ import com.mathieuclement.lib.autoindex.provider.common.captcha.event.AsyncAutoI
 import com.mathieuclement.lib.autoindex.provider.common.captcha.event.CaptchaListener;
 import com.mathieuclement.lib.autoindex.provider.common.captcha.event.PlateRequestListener;
 import com.mathieuclement.lib.autoindex.provider.exception.PlateRequestException;
+import com.mathieuclement.lib.autoindex.provider.exception.ProviderException;
 import org.apache.http.HttpHost;
 import org.apache.http.HttpResponse;
 import org.apache.http.HttpVersion;
@@ -73,7 +74,11 @@ public class AsyncCariAutoIndexProviderTest {
                         int plateNumber = Integer.parseInt(plateNumberTextField.getText());
                         plateNumberTextField.setText("Processing " + plateNumberTextField.getText() + "... Please wait.");
                         plateNumberTextField.setEnabled(false);
-                        asyncAutoIndexProvider.requestPlateOwner(new Plate(plateNumber, PlateType.AUTOMOBILE, selectedCanton));
+                        try {
+                            asyncAutoIndexProvider.requestPlateOwner(new Plate(plateNumber, PlateType.AUTOMOBILE, selectedCanton));
+                        } catch (ProviderException e1) {
+                            e1.printStackTrace();
+                        }
                     }
                 }).start();
             }
@@ -95,7 +100,7 @@ public class AsyncCariAutoIndexProviderTest {
             }
 
             @Override
-            public void onCaptchaCodeRequested(Plate plate, String captchaImageUrl, final HttpClient httpClient, HttpHost httpHost, final HttpContext httpContext, String httpHostHeaderValue, AsyncAutoIndexProvider provider) {
+            public void onCaptchaCodeRequested(Plate plate, String captchaImageUrl, final HttpClient httpClient, HttpHost httpHost, final HttpContext httpContext, String httpHostHeaderValue, AsyncAutoIndexProvider provider) throws ProviderException {
                 try {
                     System.out.println("Downloading image...");
                     BasicHttpRequest httpRequest = new BasicHttpRequest("GET", captchaImageUrl, HttpVersion.HTTP_1_1);
