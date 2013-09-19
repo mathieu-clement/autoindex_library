@@ -20,6 +20,8 @@ public abstract class AsyncAutoIndexProvider {
 
     public abstract boolean isPlateTypeSupported(PlateType plateType);
 
+    public abstract boolean isCaptchaUppercaseOnly();
+
     /**
      * Do the same as {@link AutoIndexProvider#getPlateOwner(com.mathieuclement.lib.autoindex.plate.Plate)}, except that this method returns immediately
      * and a event is thrown to captchaListeners of this class. See {@link #addListener(CaptchaListener)}

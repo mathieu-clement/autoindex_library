@@ -59,6 +59,11 @@ public abstract class AsyncCariAutoIndexProvider extends AsyncAutoIndexProvider 
         initPlateTypeMapping();
     }
 
+    @Override
+    public boolean isCaptchaUppercaseOnly() {
+        return false;
+    }
+
     private Set<Header> getHttpHeaders() {
         Set<Header> headers = new LinkedHashSet<Header>();
 
@@ -78,6 +83,8 @@ public abstract class AsyncCariAutoIndexProvider extends AsyncAutoIndexProvider 
     private Header getHostHeader() {
         return new BasicHeader("Host", getCariHttpHostname());
     }
+
+
 
     private void initPlateTypeMapping() {
         plateTypeMapping.put(PlateType.AUTOMOBILE, 1);

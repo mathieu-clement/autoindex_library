@@ -26,7 +26,6 @@ public abstract class AsyncGermanCariAutoIndexProvider extends AsyncCariAutoInde
     protected PlateOwner htmlToPlateOwner(HttpResponse response, Plate plate) throws IOException, PlateOwnerDataException,
             CaptchaException, ProviderException, PlateOwnerNotFoundException, PlateOwnerHiddenException {
         htmlPage = ResponseUtils.toString(response);
-        System.err.println(htmlPage);
 
         // Check presence of warning (shown on Fribourg webpage)
         /*
@@ -56,9 +55,7 @@ public abstract class AsyncGermanCariAutoIndexProvider extends AsyncCariAutoInde
         // See http://www.vs.ch/navig/navig.asp?MenuID=25069&RefMenuID=0&RefServiceID=0
         if (htmlPage.contains("motivation") ||
                 htmlPage.contains("parent.parent.location.href=\"http://www.baselland" +
-                        ".ch/formulare/mfk_kontrollschild-gesperrt.html\"") ||
-                htmlPage.contains("parent.parent.location.href=\"http://www.ocn" +
-                        ".ch/ocn/fr/pub/ocn_online/autoindex/protection_des_donnees.htm\";")) {
+                        ".ch/formulare/mfk_kontrollschild-gesperrt.html\"")) {
             throw new PlateOwnerHiddenException("Plate owner doesn't want to publish his data.", plate);
         }
 

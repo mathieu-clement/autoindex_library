@@ -80,6 +80,11 @@ public class AsyncViacarAutoIndexProvider extends AsyncAutoIndexProvider {
     }
 
     @Override
+    public boolean isCaptchaUppercaseOnly() {
+        return true;
+    }
+
+    @Override
     protected void makeRequestBeforeCaptchaEntered(Plate plate) throws ProviderException {
         if (httpClient == null) {
             try {
