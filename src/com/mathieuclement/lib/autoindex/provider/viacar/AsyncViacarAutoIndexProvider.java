@@ -5,6 +5,7 @@ import com.mathieuclement.lib.autoindex.plate.PlateOwner;
 import com.mathieuclement.lib.autoindex.plate.PlateType;
 import com.mathieuclement.lib.autoindex.provider.common.captcha.CaptchaException;
 import com.mathieuclement.lib.autoindex.provider.common.captcha.event.AsyncAutoIndexProvider;
+import com.mathieuclement.lib.autoindex.provider.exception.NumberOfRequestsExceededException;
 import com.mathieuclement.lib.autoindex.provider.exception.PlateOwnerNotFoundException;
 import com.mathieuclement.lib.autoindex.provider.exception.ProviderException;
 import org.apache.http.*;
@@ -126,9 +127,15 @@ public class AsyncViacarAutoIndexProvider extends AsyncAutoIndexProvider {
                 return;
             }
             captchaPostParams = makeFormParams(dummyResponse.getEntity().getContent(), "utf-8", getLoginUrl());
+
             captchaId = extractCaptchaId(debugHtml);
             //dummyResponse.getEntity().getContent().close();
-            //printDebugHtml();
+            // System.out.println(debugHtml);
+
+            // Check not requests exceeded
+            if (debugHtml.contains("Sie haben die Anzahl")) { // zul&auml;ssiger Abfragen f&uuml;r heute erreicht."))
+                throw new NumberOfRequestsExceededException();
+            }
         } catch (IOException e) {
             firePlateRequestException(plate, new ProviderException("Could not do the dummy page view request to get a session.", e, plate));
             return;
@@ -273,7 +280,6 @@ public class AsyncViacarAutoIndexProvider extends AsyncAutoIndexProvider {
             if (debugHtml.contains("Die Zeit ist abgelaufen, bitte neu anmelden.")) {
                 throw new ProviderException("Time out from provider", plate);
             }
-
 
             try {
                 captchaResponse.getEntity().getContent().close();

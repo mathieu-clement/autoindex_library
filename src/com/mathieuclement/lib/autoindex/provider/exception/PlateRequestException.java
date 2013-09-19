@@ -15,6 +15,10 @@ public abstract class PlateRequestException extends Exception {
         this.plate = plate;
     }
 
+    public PlateRequestException(String s) {
+        super(s);
+    }
+
     public Plate getPlate() {
         return plate;
     }

@@ -14,4 +14,8 @@ public class ProviderException extends PlateRequestException {
     public ProviderException(String message, Throwable cause, Plate plate) {
         super(message, cause, plate);
     }
+
+    public ProviderException(String s) {
+        super(s);
+    }
 }
