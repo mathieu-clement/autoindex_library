@@ -316,7 +316,7 @@ public class AsyncViacarAutoIndexProvider extends AsyncAutoIndexProvider {
             // Close connection and release resources
             // Disabled as a workaround for "java.lang.IllegalStateException: Connection manager has been shut down"
             try {
-                httpClient.getConnectionManager().shutdown();
+                // httpClient.getConnectionManager().shutdown();
             } catch (Throwable t) {
                 // ignore
             }
