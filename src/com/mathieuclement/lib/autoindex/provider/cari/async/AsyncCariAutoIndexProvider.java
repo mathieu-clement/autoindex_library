@@ -7,10 +7,7 @@ import com.mathieuclement.lib.autoindex.plate.PlateType;
 import com.mathieuclement.lib.autoindex.provider.common.MyHttpClient;
 import com.mathieuclement.lib.autoindex.provider.common.captcha.CaptchaException;
 import com.mathieuclement.lib.autoindex.provider.common.captcha.event.AsyncAutoIndexProvider;
-import com.mathieuclement.lib.autoindex.provider.exception.PlateOwnerHiddenException;
-import com.mathieuclement.lib.autoindex.provider.exception.PlateOwnerNotFoundException;
-import com.mathieuclement.lib.autoindex.provider.exception.ProviderException;
-import com.mathieuclement.lib.autoindex.provider.exception.UnsupportedPlateException;
+import com.mathieuclement.lib.autoindex.provider.exception.*;
 import com.mathieuclement.lib.autoindex.provider.utils.ResponseUtils;
 import org.apache.commons.lang3.StringEscapeUtils;
 import org.apache.http.*;
@@ -268,6 +265,8 @@ public abstract class AsyncCariAutoIndexProvider extends AsyncAutoIndexProvider 
             firePlateRequestException(plate, e);
         } catch (PlateOwnerHiddenException e) {
             firePlateRequestException(plate, e);
+        } catch (IgnoreMeException e) {
+            e.printStackTrace();
         }
 
         //firePlateRequestException(plate, new ProviderException("Problem with Captcha", new CaptchaException("Bad captcha"), plate));
@@ -282,7 +281,7 @@ public abstract class AsyncCariAutoIndexProvider extends AsyncAutoIndexProvider 
     private static final Pattern plateOwnerPattern = Pattern.compile("<td class='libelle'>(.+)\\s*</td>\\s+<td( nowrap)?>\\s*(.+)\\s*</td>");
 
     protected PlateOwner htmlToPlateOwner(HttpResponse response, Plate plate) throws IOException, PlateOwnerDataException,
-            CaptchaException, ProviderException, PlateOwnerNotFoundException, PlateOwnerHiddenException {
+            CaptchaException, ProviderException, PlateOwnerNotFoundException, PlateOwnerHiddenException, IgnoreMeException {
         htmlPage = ResponseUtils.toString(response);
 
         // Check presence of warning (shown on Fribourg webpage)
@@ -324,7 +323,7 @@ public abstract class AsyncCariAutoIndexProvider extends AsyncAutoIndexProvider 
 
         while (matcher.find()) {
             if (matcher.group(0).contains("checkField") || matcher.group(0).contains("Captcha Code generation error")) {
-                throw new ProviderException("Something went bad because we were presented the form page again!", plate);
+                throw new IgnoreMeException("Something went bad because we were presented the form page again!", plate);
             }
 
             String dataName = matcher.group(1);
