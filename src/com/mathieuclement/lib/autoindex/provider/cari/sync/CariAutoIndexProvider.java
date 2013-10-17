@@ -60,7 +60,6 @@ public abstract class CariAutoIndexProvider
         // TODO Add "Brun moto"
 
         // TODO Add "Bateau"
-        plateTypeMapping.put(PlateType.BOAT, 21);
     }
 
     protected CariAutoIndexProvider(CaptchaHandler captchaHandler) {
@@ -144,9 +143,6 @@ public abstract class CariAutoIndexProvider
 
         // Set sous-catégorie to "Normale" (auto / moto)
         int sousCat = 1;
-        if (PlateType.BOAT.equals(plate.getType())) {
-            sousCat = 11;
-        }
         postParams.add(new BasicNameValuePair("sousCat", String.valueOf(sousCat)));
 
         postParams.add(new BasicNameValuePair("captchaVal", captchaValue));
@@ -282,7 +278,6 @@ public abstract class CariAutoIndexProvider
         supportedPlateTypes.add(PlateType.AUTOMOBILE);
         supportedPlateTypes.add(PlateType.MOTORCYCLE);
         supportedPlateTypes.add(PlateType.AGRICULTURAL);
-        supportedPlateTypes.add(PlateType.BOAT);
     }
 
     @Override

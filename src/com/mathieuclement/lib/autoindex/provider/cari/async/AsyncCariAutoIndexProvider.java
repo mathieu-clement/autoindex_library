@@ -100,8 +100,6 @@ public abstract class AsyncCariAutoIndexProvider extends AsyncAutoIndexProvider 
         plateTypeMapping.put(PlateType.AGRICULTURAL, 4);
 
         plateTypeMapping.put(PlateType.INDUSTRIAL, 5);
-
-        plateTypeMapping.put(PlateType.BOAT, 21);
     }
 
     /**
@@ -206,9 +204,7 @@ public abstract class AsyncCariAutoIndexProvider extends AsyncAutoIndexProvider 
 
         // Set sous-catégorie to "Normale" (auto / moto / agricultural / industrial)
         int sousCat = 1;
-        if (PlateType.BOAT.equals(plate.getType())) {
-            sousCat = 11;
-        } else if (PlateType.AUTOMOBILE_TEMPORARY.equals(plate.getType())) {
+        if (PlateType.AUTOMOBILE_TEMPORARY.equals(plate.getType())) {
             sousCat = 2;
         } else if (PlateType.MOTORCYCLE_TEMPORARY.equals(plate.getType())) {
             sousCat = 2;
@@ -380,7 +376,6 @@ public abstract class AsyncCariAutoIndexProvider extends AsyncAutoIndexProvider 
         supportedPlateTypes.add(PlateType.MOPED);
         supportedPlateTypes.add(PlateType.AGRICULTURAL);
         supportedPlateTypes.add(PlateType.INDUSTRIAL);
-        supportedPlateTypes.add(PlateType.BOAT);
     }
 
     @Override

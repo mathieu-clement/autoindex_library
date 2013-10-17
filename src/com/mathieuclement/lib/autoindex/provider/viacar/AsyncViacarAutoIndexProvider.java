@@ -53,7 +53,6 @@ public class AsyncViacarAutoIndexProvider extends AsyncAutoIndexProvider {
         supportedPlateTypes.add(PlateType.AUTOMOBILE);
         supportedPlateTypes.add(PlateType.MOTORCYCLE);
         supportedPlateTypes.add(PlateType.AGRICULTURAL);
-        supportedPlateTypes.add(PlateType.BOAT);
     }
 
     private DefaultHttpClient httpClient;
@@ -392,7 +391,6 @@ public class AsyncViacarAutoIndexProvider extends AsyncAutoIndexProvider {
         // TODO Add "Anhänger" (wie auf Viacar gesehen)
         plateTypeMapping.put("Motorrad", PlateType.MOTORCYCLE);
         plateTypeMapping.put("Motorwagen", PlateType.AUTOMOBILE);
-        plateTypeMapping.put("Schiff", PlateType.BOAT);
         plateTypeMapping.put("Landw. Motorfahrzeug", PlateType.AGRICULTURAL);
     }
 

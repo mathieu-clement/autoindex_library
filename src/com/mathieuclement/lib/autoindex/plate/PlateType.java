@@ -21,8 +21,7 @@ public final class PlateType {
                 MOTORCYCLE, MOTORCYCLE_TEMPORARY, MOTORCYCLE_YELLOW, MOTORCYCLE_BROWN, MOTORCYCLE_REPAIR_SHOP,
                 MOPED,
                 AGRICULTURAL,
-                INDUSTRIAL,
-                BOAT
+                INDUSTRIAL
         };
     }
 
@@ -40,8 +39,6 @@ public final class PlateType {
     public static final PlateType MOPED = new PlateType("moped");
     public static final PlateType AGRICULTURAL = new PlateType("agricultural");
     public static final PlateType INDUSTRIAL = new PlateType("industrial");
-    public static final PlateType BOAT = new PlateType("boat");
-
     public String toString() {
         return name;
     }

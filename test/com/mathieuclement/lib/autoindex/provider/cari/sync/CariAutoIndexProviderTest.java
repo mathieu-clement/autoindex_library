@@ -159,13 +159,6 @@ public class CariAutoIndexProviderTest {
     }
 
     @Test
-    public void testFribourgBateau() throws Exception {
-        PlateOwner expectedFrBateau1 = new PlateOwner("Baumgartner Mathias", "Talmatt 48", "", 4317, "Wegenstetten");
-        PlateOwner actualFrBateau1 = fribourgAutoIndexProvider.getPlateOwner(new Plate(123, PlateType.BOAT, cantonFribourg));
-        Assert.assertEquals(expectedFrBateau1, actualFrBateau1);
-    }
-
-    @Test
     public void testFribourgMoto() throws Exception {
         // This test is also interesting to see long values
         /*
@@ -195,13 +188,6 @@ public class CariAutoIndexProviderTest {
         PlateOwner expectedVs2 = new PlateOwner("Defayes Eric", "Route de l'Ecosse 7", "", 1907, "Saxon");
         PlateOwner actualVs2 = valaisAutoIndexProvider.getPlateOwner(new Plate(22222, PlateType.AUTOMOBILE, cantonValais));
         Assert.assertEquals(expectedVs2, actualVs2);
-    }
-
-    @Test
-    public void testValaisBateau() throws Exception {
-        PlateOwner expectedVsBateau1 = new PlateOwner("Brun Marielle", "Chemin Neuf 43", "", 1897, "Les Evouettes");
-        PlateOwner actualVsBateau1 = valaisAutoIndexProvider.getPlateOwner(new Plate(123, PlateType.BOAT, cantonValais));
-        Assert.assertEquals(expectedVsBateau1, actualVsBateau1);
     }
 
     private String readString(String fieldName) {
