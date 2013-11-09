@@ -4,7 +4,6 @@ import com.mathieuclement.lib.autoindex.canton.Canton;
 import com.mathieuclement.lib.autoindex.plate.Plate;
 import com.mathieuclement.lib.autoindex.plate.PlateOwner;
 import com.mathieuclement.lib.autoindex.plate.PlateType;
-import com.mathieuclement.lib.autoindex.provider.cari.async.AsyncBaselLandAutoIndexProvider;
 import com.mathieuclement.lib.autoindex.provider.cari.async.AsyncFribourgAutoIndexProvider;
 import com.mathieuclement.lib.autoindex.provider.common.captcha.event.AsyncAutoIndexProvider;
 import com.mathieuclement.lib.autoindex.provider.common.captcha.event.CaptchaListener;
@@ -44,8 +43,7 @@ public class AsyncCariAutoIndexProviderTest {
     @Test
     public void testWithDialog() throws Exception {
         Canton cantonFribourg = new Canton("FR", true, new AsyncFribourgAutoIndexProvider());
-        Canton cantonBaselLand = new Canton("BL", true, new AsyncBaselLandAutoIndexProvider());
-        openDiag(cantonBaselLand);
+        openDiag(cantonFribourg);
     }
 
     public void openDiag(final Canton canton) throws Exception {

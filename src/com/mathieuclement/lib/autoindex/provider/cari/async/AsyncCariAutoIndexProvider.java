@@ -82,7 +82,6 @@ public abstract class AsyncCariAutoIndexProvider extends AsyncAutoIndexProvider 
     }
 
 
-
     private void initPlateTypeMapping() {
         plateTypeMapping.put(PlateType.AUTOMOBILE, 1);
         plateTypeMapping.put(PlateType.AUTOMOBILE_REPAIR_SHOP, 1);
@@ -129,7 +128,7 @@ public abstract class AsyncCariAutoIndexProvider extends AsyncAutoIndexProvider 
             try {
                 Security.addProvider(new BouncyCastleProvider());
                 File file = new File(MyHttpClient.class.getResource("trust_store.bks").getFile());
-                if(!file.exists()) {
+                if (!file.exists()) {
                     throw new RuntimeException("BKS file not found!");
                 }
                 //httpClient = new DecompressingHttpClient(new MyHttpClient(new FileInputStream(file))); // gzip
@@ -304,7 +303,13 @@ public abstract class AsyncCariAutoIndexProvider extends AsyncAutoIndexProvider 
         }
 
         // See http://www.vs.ch/navig/navig.asp?MenuID=25069&RefMenuID=0&RefServiceID=0
-        if (htmlPage.contains("motivation") || htmlPage.contains("parent.parent.location.href=\"http://www.ocn.ch/ocn/fr/pub/ocn_online/autoindex/protection_des_donnees.htm\";")) {
+        if (htmlPage.contains("motivation") ||
+                // FR
+                htmlPage.contains("parent.parent.location.href=" +
+                        "\"http://www.ocn.ch/ocn/fr/pub/ocn_online/autoindex/protection_des_donnees.htm\";") ||
+                // VS
+                htmlPage.contains("MenuID=25069")
+                ) {
             throw new PlateOwnerHiddenException("Plate owner doesn't want to publish his data.", plate);
         }
 

@@ -38,7 +38,7 @@ public class AsyncViacarAutoIndexProviderTest {
     private AsyncViacarAutoIndexProvider provider;
     private Canton canton;
 
-    public static final String CANTON_ABBR = "ZH"; // Uppercase
+    public static final String CANTON_ABBR = "AG"; // Uppercase
 
     @Before
     public void setUp() throws Exception {
