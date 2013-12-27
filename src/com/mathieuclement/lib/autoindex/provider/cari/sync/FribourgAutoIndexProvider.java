@@ -3,6 +3,7 @@ package com.mathieuclement.lib.autoindex.provider.cari.sync;
 import com.mathieuclement.lib.autoindex.provider.common.captcha.CaptchaHandler;
 import org.apache.http.HttpHost;
 
+@Deprecated
 public class FribourgAutoIndexProvider extends CariAutoIndexProvider {
 
     //private HttpHost httpHost = new HttpHost("156.25.9.252", 443, "https"); // appls2.fr.ch

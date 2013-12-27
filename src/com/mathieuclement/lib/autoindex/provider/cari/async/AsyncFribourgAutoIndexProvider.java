@@ -18,6 +18,6 @@ public class AsyncFribourgAutoIndexProvider extends AsyncCariAutoIndexProvider {
 
     @Override
     protected String getCariHttpHostname() {
-        return "appls2.fr.ch";
+        return "appls.fr.ch";
     }
 }
