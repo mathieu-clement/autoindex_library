@@ -4,6 +4,7 @@ import com.mathieuclement.lib.autoindex.canton.Canton;
 import com.mathieuclement.lib.autoindex.plate.Plate;
 import com.mathieuclement.lib.autoindex.plate.PlateOwner;
 import com.mathieuclement.lib.autoindex.plate.PlateType;
+import com.mathieuclement.lib.autoindex.provider.common.ExecCommand;
 import com.mathieuclement.lib.autoindex.provider.common.captcha.CaptchaAutoIndexProvider;
 import com.mathieuclement.lib.autoindex.provider.common.captcha.CaptchaHandler;
 import com.mathieuclement.lib.autoindex.provider.exception.PlateOwnerNotFoundException;
@@ -19,12 +20,6 @@ import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 
-import javax.swing.*;
-import java.awt.*;
-import java.awt.event.ActionEvent;
-import java.awt.event.ActionListener;
-import java.awt.event.MouseAdapter;
-import java.awt.event.MouseEvent;
 import java.io.*;
 
 public class CariAutoIndexProviderTest {
@@ -38,39 +33,24 @@ public class CariAutoIndexProviderTest {
         CaptchaHandler autoCaptchaHandler = new CaptchaHandler() {
 
             public File captchaImageFile;
-            public JTextField inputField;
 
-            private void generateCaptchaImage(JLabel imageLabel, CaptchaAutoIndexProvider autoIndexProvider, HttpClient httpClient, HttpContext httpContext) throws IOException {
+            private void generateCaptchaImage(CaptchaAutoIndexProvider autoIndexProvider, HttpClient httpClient, HttpContext httpContext) throws IOException {
                 System.out.println("Downloading image...");
-                imageLabel.setText("Refreshing captcha...");
                 HttpResponse httpResponse = httpClient.execute(new HttpGet(autoIndexProvider.regenerateCaptchaImageUrl()), httpContext);
                 captchaImageFile = File.createTempFile("cari-captcha", ".jpg");
                 FileOutputStream fos = new FileOutputStream(captchaImageFile);
                 httpResponse.getEntity().writeTo(fos);
                 fos.close();
                 httpResponse.getEntity().getContent().close();
-
-                imageLabel.setIcon(new ImageIcon(captchaImageFile.getAbsolutePath()));
             }
 
             private String solveCaptcha(File file) {
                 try {
-                    return exec("/home/mathieu/Dropbox/work/prout/decoder_cari.pl " + file.getAbsolutePath());
+                    return ExecCommand.exec("/home/mathieu/Dropbox/work/prout/decoder_cari.pl " + file.getAbsolutePath());
                 } catch (IOException e) {
                     e.printStackTrace();
                 }
                 return null;
-            }
-
-            private String exec(String cmd) throws IOException {
-                Runtime runtime = Runtime.getRuntime();
-                Process process = runtime.exec(cmd);
-                BufferedReader stdInput = new BufferedReader(new InputStreamReader(process.getInputStream()));
-
-                // read the output from the command
-                String s = stdInput.readLine();
-                stdInput.close();
-                return s;
             }
 
             @Override
@@ -88,63 +68,12 @@ public class CariAutoIndexProviderTest {
                     fos.close();
                     httpResponse.getEntity().getContent().close();
 
-                    final String[] captchaCode = new String[1];
-
-                    final JDialog dialog = new JDialog();
-                    dialog.setDefaultCloseOperation(WindowConstants.DISPOSE_ON_CLOSE);
-                    Container contentPane = dialog.getContentPane();
-                    contentPane.setLayout(new BorderLayout());
-
-                    final String solvedCaptcha = solveCaptcha(captchaImageFile);
-
-                    final JLabel imageLabel = new JLabel(new ImageIcon(captchaImageFile.getAbsolutePath()));
-                    imageLabel.addMouseListener(new MouseAdapter() {
-                        @Override
-                        public void mouseClicked(MouseEvent e) {
-                            if (e.getClickCount() == 2) {
-                                try {
-                                    generateCaptchaImage(imageLabel, captchaAutoIndexProvider, httpClient, httpContext);
-
-                                    inputField.setText(solvedCaptcha);
-                                } catch (IOException ioe) {
-                                    ioe.printStackTrace();
-                                }
-                            }
-                        }
-                    });
-                    contentPane.add(imageLabel, BorderLayout.NORTH);
-
-                    inputField = new JTextField();
-                    ActionListener actionListener = new ActionListener() {
-                        @Override
-                        public void actionPerformed(ActionEvent e) {
-                            captchaCode[0] = inputField.getText();
-                            dialog.dispose();
-                        }
-                    };
-                    inputField.addActionListener(actionListener);
-                    contentPane.add(inputField, BorderLayout.CENTER);
-                    inputField.setText(solvedCaptcha);
-
-                    JButton continueButton = new JButton("Continue");
-                    contentPane.add(continueButton, BorderLayout.SOUTH);
-                    continueButton.addActionListener(actionListener);
-
-                    dialog.pack();
-                    dialog.setModal(true);
-                    dialog.setLocationRelativeTo(null);
-                    dialog.setVisible(true);
-
-                    System.out.println("User / System entered '" + captchaCode[0] + "' as Captcha code.");
-
-                    return captchaCode[0];
-
+                    return solveCaptcha(captchaImageFile);
                 } catch (IOException e) {
                     System.err.println("Failed to download or open captcha image");
                     e.printStackTrace();
                 }
-
-                return readString("Enter Captcha code");
+                return null;
             }
 
             @Override
@@ -216,27 +145,5 @@ public class CariAutoIndexProviderTest {
         PlateOwner expectedVs2 = new PlateOwner("Defayes Eric", "Route de l'Ecosse 7", "", 1907, "Saxon");
         PlateOwner actualVs2 = valaisAutoIndexProvider.getPlateOwner(new Plate(22222, PlateType.AUTOMOBILE, cantonValais));
         Assert.assertEquals(expectedVs2, actualVs2);
-    }
-
-    private String readString(String fieldName) {
-
-        //  prompt the user to enter their name
-        System.out.print(fieldName + ": ");
-
-        //  open up standard input
-        BufferedReader br = new BufferedReader(new InputStreamReader(System.in));
-
-        String userInput = null;
-
-        //  read the username from the command-line; need to use try/catch with the
-        //  readLine() method
-        try {
-            userInput = br.readLine();
-        } catch (IOException ioe) {
-            System.out.println("IO error trying to read standard input!");
-        }
-
-        return userInput;
-
     }
 }
