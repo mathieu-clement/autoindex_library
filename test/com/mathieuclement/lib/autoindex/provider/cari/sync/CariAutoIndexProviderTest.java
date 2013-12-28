@@ -35,19 +35,42 @@ public class CariAutoIndexProviderTest {
 
     @Before
     public void setUp() throws Exception {
-        CaptchaHandler dialogCaptchaHandler = new CaptchaHandler() {
+        CaptchaHandler autoCaptchaHandler = new CaptchaHandler() {
+
+            public File captchaImageFile;
+            public JTextField inputField;
 
             private void generateCaptchaImage(JLabel imageLabel, CaptchaAutoIndexProvider autoIndexProvider, HttpClient httpClient, HttpContext httpContext) throws IOException {
                 System.out.println("Downloading image...");
                 imageLabel.setText("Refreshing captcha...");
                 HttpResponse httpResponse = httpClient.execute(new HttpGet(autoIndexProvider.regenerateCaptchaImageUrl()), httpContext);
-                File captchaImageFile = File.createTempFile("cari-captcha", ".jpg");
+                captchaImageFile = File.createTempFile("cari-captcha", ".jpg");
                 FileOutputStream fos = new FileOutputStream(captchaImageFile);
                 httpResponse.getEntity().writeTo(fos);
                 fos.close();
                 httpResponse.getEntity().getContent().close();
 
                 imageLabel.setIcon(new ImageIcon(captchaImageFile.getAbsolutePath()));
+            }
+
+            private String solveCaptcha(File file) {
+                try {
+                    return exec("/home/mathieu/Dropbox/work/prout/decoder_cari.pl " + file.getAbsolutePath());
+                } catch (IOException e) {
+                    e.printStackTrace();
+                }
+                return null;
+            }
+
+            private String exec(String cmd) throws IOException {
+                Runtime runtime = Runtime.getRuntime();
+                Process process = runtime.exec(cmd);
+                BufferedReader stdInput = new BufferedReader(new InputStreamReader(process.getInputStream()));
+
+                // read the output from the command
+                String s = stdInput.readLine();
+                stdInput.close();
+                return s;
             }
 
             @Override
@@ -59,7 +82,7 @@ public class CariAutoIndexProviderTest {
                     BasicHttpRequest httpRequest = new BasicHttpRequest("GET", captchaImageUrl, HttpVersion.HTTP_1_1);
                     httpRequest.setHeader("host", httpHostHeaderValue);
                     HttpResponse httpResponse = httpClient.execute(httpHost, httpRequest, httpContext);
-                    File captchaImageFile = File.createTempFile("cari-captcha", ".jpg");
+                    captchaImageFile = File.createTempFile("cari-captcha", ".jpg");
                     FileOutputStream fos = new FileOutputStream(captchaImageFile);
                     httpResponse.getEntity().writeTo(fos);
                     fos.close();
@@ -72,6 +95,8 @@ public class CariAutoIndexProviderTest {
                     Container contentPane = dialog.getContentPane();
                     contentPane.setLayout(new BorderLayout());
 
+                    final String solvedCaptcha = solveCaptcha(captchaImageFile);
+
                     final JLabel imageLabel = new JLabel(new ImageIcon(captchaImageFile.getAbsolutePath()));
                     imageLabel.addMouseListener(new MouseAdapter() {
                         @Override
@@ -79,6 +104,8 @@ public class CariAutoIndexProviderTest {
                             if (e.getClickCount() == 2) {
                                 try {
                                     generateCaptchaImage(imageLabel, captchaAutoIndexProvider, httpClient, httpContext);
+
+                                    inputField.setText(solvedCaptcha);
                                 } catch (IOException ioe) {
                                     ioe.printStackTrace();
                                 }
@@ -87,7 +114,7 @@ public class CariAutoIndexProviderTest {
                     });
                     contentPane.add(imageLabel, BorderLayout.NORTH);
 
-                    final JTextField inputField = new JTextField();
+                    inputField = new JTextField();
                     ActionListener actionListener = new ActionListener() {
                         @Override
                         public void actionPerformed(ActionEvent e) {
@@ -97,6 +124,7 @@ public class CariAutoIndexProviderTest {
                     };
                     inputField.addActionListener(actionListener);
                     contentPane.add(inputField, BorderLayout.CENTER);
+                    inputField.setText(solvedCaptcha);
 
                     JButton continueButton = new JButton("Continue");
                     contentPane.add(continueButton, BorderLayout.SOUTH);
@@ -107,7 +135,7 @@ public class CariAutoIndexProviderTest {
                     dialog.setLocationRelativeTo(null);
                     dialog.setVisible(true);
 
-                    System.out.println("User entered '" + captchaCode[0] + "' as Captcha code.");
+                    System.out.println("User / System entered '" + captchaCode[0] + "' as Captcha code.");
 
                     return captchaCode[0];
 
@@ -130,8 +158,8 @@ public class CariAutoIndexProviderTest {
             }
         };
 
-        fribourgAutoIndexProvider = new FribourgAutoIndexProvider(dialogCaptchaHandler);
-        valaisAutoIndexProvider = new ValaisAutoIndexProvider(dialogCaptchaHandler);
+        fribourgAutoIndexProvider = new FribourgAutoIndexProvider(autoCaptchaHandler);
+        valaisAutoIndexProvider = new ValaisAutoIndexProvider(autoCaptchaHandler);
 
         cantonFribourg = new Canton("FR", true, fribourgAutoIndexProvider);
         cantonValais = new Canton("VS", true, valaisAutoIndexProvider);
