@@ -4,6 +4,7 @@ import com.mathieuclement.lib.autoindex.canton.Canton;
 import com.mathieuclement.lib.autoindex.plate.Plate;
 import com.mathieuclement.lib.autoindex.plate.PlateOwner;
 import com.mathieuclement.lib.autoindex.plate.PlateType;
+import com.mathieuclement.lib.autoindex.provider.common.ExecCommand;
 import com.mathieuclement.lib.autoindex.provider.common.captcha.event.AsyncAutoIndexProvider;
 import com.mathieuclement.lib.autoindex.provider.common.captcha.event.CaptchaListener;
 import com.mathieuclement.lib.autoindex.provider.common.captcha.event.PlateRequestListener;
@@ -90,17 +91,31 @@ public class AsyncViacarAutoIndexProviderTest {
         mainPanel.add(plateNumberTextField);
 
         canton.getAsyncAutoIndexProvider().addListener(new CaptchaListener() {
+            public File captchaImageFile;
+            public JTextField inputField;
+
             private void generateCaptchaImage(JLabel imageLabel, AsyncAutoIndexProvider provider, HttpClient httpClient, HttpContext httpContext) throws IOException {
                 System.out.println("Downloading image...");
                 imageLabel.setText("Refreshing captcha...");
                 HttpResponse httpResponse = httpClient.execute(new HttpGet(provider.generateCaptchaImageUrl()), httpContext);
-                File captchaImageFile = File.createTempFile("viacar-captcha", ".png");
+                captchaImageFile = File.createTempFile("viacar-captcha", ".png");
                 FileOutputStream fos = new FileOutputStream(captchaImageFile);
                 httpResponse.getEntity().writeTo(fos);
                 fos.close();
                 httpResponse.getEntity().getContent().close();
 
                 imageLabel.setIcon(new ImageIcon(captchaImageFile.getAbsolutePath()));
+
+            }
+
+            private String solveCaptcha(File file) {
+                try {
+                    return ExecCommand.exec("/home/mathieu/Dropbox/work/prout/decoder_viacar.pl " +
+                            file.getAbsolutePath());
+                } catch (IOException e) {
+                    e.printStackTrace();
+                }
+                return null;
             }
 
             @Override
@@ -110,7 +125,7 @@ public class AsyncViacarAutoIndexProviderTest {
                     BasicHttpRequest httpRequest = new BasicHttpRequest("GET", captchaImageUrl, HttpVersion.HTTP_1_1);
                     //httpRequest.setHeader("host", httpHostHeaderValue);
                     HttpResponse httpResponse = httpClient.execute(httpHost, httpRequest, httpContext);
-                    File captchaImageFile = File.createTempFile("viacar-captcha", ".png");
+                    captchaImageFile = File.createTempFile("viacar-captcha", ".png");
                     FileOutputStream fos = new FileOutputStream(captchaImageFile);
                     httpResponse.getEntity().writeTo(fos);
                     fos.close();
@@ -123,6 +138,8 @@ public class AsyncViacarAutoIndexProviderTest {
                     Container contentPane = dialog.getContentPane();
                     contentPane.setLayout(new BorderLayout());
 
+                    String solvedCaptcha = solveCaptcha(captchaImageFile);
+
                     final JLabel imageLabel = new JLabel(new ImageIcon(captchaImageFile.getAbsolutePath()));
                     imageLabel.addMouseListener(new MouseAdapter() {
                         @Override
@@ -130,6 +147,7 @@ public class AsyncViacarAutoIndexProviderTest {
                             if (e.getClickCount() == 2) {
                                 try {
                                     generateCaptchaImage(imageLabel, canton.getAsyncAutoIndexProvider(), httpClient, httpContext);
+                                    inputField.setText(solveCaptcha(captchaImageFile));
                                 } catch (IOException ioe) {
                                     ioe.printStackTrace();
                                 }
@@ -138,7 +156,7 @@ public class AsyncViacarAutoIndexProviderTest {
                     });
                     contentPane.add(imageLabel, BorderLayout.NORTH);
 
-                    final JTextField inputField = new JTextField();
+                    inputField = new JTextField();
                     ActionListener actionListener = new ActionListener() {
                         @Override
                         public void actionPerformed(ActionEvent e) {
@@ -149,6 +167,7 @@ public class AsyncViacarAutoIndexProviderTest {
                         }
                     };
                     inputField.addActionListener(actionListener);
+                    inputField.setText(solvedCaptcha);
                     contentPane.add(inputField, BorderLayout.CENTER);
 
                     JButton continueButton = new JButton("Continue");
