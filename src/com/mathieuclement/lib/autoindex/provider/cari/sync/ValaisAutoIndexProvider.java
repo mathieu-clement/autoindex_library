@@ -4,11 +4,7 @@ import com.mathieuclement.lib.autoindex.provider.common.captcha.CaptchaHandler;
 import org.apache.http.HttpHost;
 
 public class ValaisAutoIndexProvider extends CariAutoIndexProvider {
-
-    private HttpHost httpHost = new HttpHost("193.247.117.81");
-    //private HttpHost httpHost = new HttpHost("www.vs.ch");
-
-    public ValaisAutoIndexProvider(CaptchaHandler captchaHandler) {
+    protected ValaisAutoIndexProvider(CaptchaHandler captchaHandler) {
         super(captchaHandler);
     }
 
@@ -16,6 +12,8 @@ public class ValaisAutoIndexProvider extends CariAutoIndexProvider {
     protected String getCariOnlineFullUrl() {
         return "http://www.vs.ch/cari-online/";
     }
+
+    private HttpHost httpHost = new HttpHost("www.vs.ch");
 
     @Override
     protected HttpHost getCariHttpHost() {
