@@ -100,7 +100,7 @@ public class ViacarAutoIndexProviderTest {
     }
 
     @Test
-    public void testFribourg() throws Exception {
+    public void testAg() throws Exception {
         PlateOwner expected = new PlateOwner("Müller Verena", "Hofstrasse 49", "", 5406, "Rütihof");
         PlateOwner actual = provider.getPlateOwner(new Plate(32413, PlateType.AUTOMOBILE, canton));
         Assert.assertEquals(expected, actual);

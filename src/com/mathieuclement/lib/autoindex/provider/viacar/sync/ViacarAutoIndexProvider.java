@@ -70,7 +70,7 @@ public class ViacarAutoIndexProvider extends CaptchaAutoIndexProvider {
     private String debugHtml; // TODO Remove
     public int MAX_REQUESTS = 3;
 
-    public static final int MAX_CAPTCHA_TRIES = 5;
+    private static final int MAX_CAPTCHA_TRIES = 10;
 
     public ViacarAutoIndexProvider(String cantonAbbr, CaptchaHandler captchaHandler) {
         super(captchaHandler);
@@ -150,8 +150,11 @@ public class ViacarAutoIndexProvider extends CaptchaAutoIndexProvider {
         } catch (IOException e) {
             throw new ProviderException("Could not do the dummy page view request to get a session.", e, plate);
         } catch (CaptchaException e) {
-            if (nbTry > MAX_CAPTCHA_TRIES) throw new ProviderException("Too many tries decoding the captcha image",
-                    e, plate);
+            if (nbTry > MAX_CAPTCHA_TRIES) {
+                captchaHandler.onCaptchaFailed();
+                throw new ProviderException("Too many tries decoding the captcha image",
+                        e, plate);
+            }
             return doGetPlateOwner(plate, nbTry + 1); // Call itself again until nbTry above max
         }
     }
@@ -184,6 +187,7 @@ public class ViacarAutoIndexProvider extends CaptchaAutoIndexProvider {
             /* Check not back on login page */
         for (NameValuePair searchFormParam : searchFormParams) {
             if ("BtLogin".equals(searchFormParam.getName())) {
+                captchaHandler.onCaptchaFailed();
                 throw new CaptchaException("Went back to captcha page");
             }
         }
@@ -205,6 +209,8 @@ public class ViacarAutoIndexProvider extends CaptchaAutoIndexProvider {
         } catch (Throwable t) {
             // ignore
         }
+
+        captchaHandler.onCaptchaSuccessful();
 
         // Perform search
         HttpResponse searchResponse = httpClient.execute(searchRequest, httpContext);
