@@ -1,4 +1,4 @@
-package com.mathieuclement.lib.autoindex.provider.viacar;
+package com.mathieuclement.lib.autoindex.provider.viacar.async;
 
 import com.mathieuclement.lib.autoindex.plate.Plate;
 import com.mathieuclement.lib.autoindex.plate.PlateOwner;

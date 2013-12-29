@@ -10,6 +10,7 @@ import com.mathieuclement.lib.autoindex.provider.common.captcha.event.CaptchaLis
 import com.mathieuclement.lib.autoindex.provider.common.captcha.event.PlateRequestListener;
 import com.mathieuclement.lib.autoindex.provider.exception.PlateRequestException;
 import com.mathieuclement.lib.autoindex.provider.exception.ProviderException;
+import com.mathieuclement.lib.autoindex.provider.viacar.async.AsyncViacarAutoIndexProvider;
 import org.apache.http.HttpHost;
 import org.apache.http.HttpResponse;
 import org.apache.http.HttpVersion;
