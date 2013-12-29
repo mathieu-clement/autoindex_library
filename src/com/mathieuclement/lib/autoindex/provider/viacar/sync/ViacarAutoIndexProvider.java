@@ -86,13 +86,18 @@ public class ViacarAutoIndexProvider extends CaptchaAutoIndexProvider {
     }
 
     @Override
-    public PlateOwner getPlateOwner(Plate plate) throws ProviderException, PlateOwnerNotFoundException,
-            PlateOwnerHiddenException, UnsupportedPlateException {
-        return doGetPlateOwner(plate, 0);
+    public PlateOwner getPlateOwner(Plate plate, int requestId) throws ProviderException, PlateOwnerNotFoundException,
+            PlateOwnerHiddenException, UnsupportedPlateException, RequestCancelledException {
+        return doGetPlateOwner(plate, requestId, 0);
     }
 
-    public PlateOwner doGetPlateOwner(Plate plate, int nbTry) throws ProviderException, PlateOwnerNotFoundException,
-            PlateOwnerHiddenException, UnsupportedPlateException {
+    public PlateOwner doGetPlateOwner(Plate plate, int requestId, int nbTry) throws ProviderException,
+            PlateOwnerNotFoundException,
+            PlateOwnerHiddenException, UnsupportedPlateException, RequestCancelledException {
+
+        if (mustCancelRequest(requestId)) {
+            throw new RequestCancelledException("Request id " + requestId + " was cancelled.", plate, requestId);
+        }
 
         System.out.println("Try " + nbTry + " for plate " + plate);
 
@@ -142,7 +147,9 @@ public class ViacarAutoIndexProvider extends CaptchaAutoIndexProvider {
                 throw new NumberOfRequestsExceededException();
             }
 
-            String decodedCaptcha = captchaHandler.handleCaptchaImage(generateCaptchaImageUrl(), httpClient, httpHost,
+            String decodedCaptcha = captchaHandler.handleCaptchaImage(requestId, generateCaptchaImageUrl(),
+                    httpClient,
+                    httpHost,
                     httpContext,
                     "www.viacar.ch", this);
 
@@ -157,8 +164,12 @@ public class ViacarAutoIndexProvider extends CaptchaAutoIndexProvider {
                 throw new ProviderException("Too many tries decoding the captcha image",
                         e, plate);
             }
-            return doGetPlateOwner(plate, nbTry + 1); // Call itself again until nbTry above max
+            return doGetPlateOwner(plate, requestId, nbTry + 1); // Call itself again until nbTry above max
         }
+    }
+
+    private boolean mustCancelRequest(int requestId) {
+        return cancelledRequests.contains(requestId);
     }
 
     protected PlateOwner doRequestAfterCaptchaEntered(String captchaCode, Plate plate, HttpClient httpClient, HttpContext httpContext) throws ProviderException, CaptchaException, IOException, PlateOwnerNotFoundException {
@@ -426,4 +437,15 @@ public class ViacarAutoIndexProvider extends CaptchaAutoIndexProvider {
         return supportedPlateTypes.contains(plateType);
     }
 
+    @Override
+    public void cancel(int requestId) {
+        cancelledRequests.add(requestId);
+    }
+
+    private Set<Integer> cancelledRequests = new HashSet<Integer>();
+
+    @Override
+    public boolean isCancelled(int requestId) {
+        return mustCancelRequest(requestId);
+    }
 }

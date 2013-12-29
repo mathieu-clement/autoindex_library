@@ -10,9 +10,10 @@ import org.apache.http.protocol.HttpContext;
  * You can call the
  */
 public interface CaptchaHandler {
-    String handleCaptchaImage(String captchaImageUrl, HttpClient httpClient, HttpHost httpHost, HttpContext httpContext,
+    String handleCaptchaImage(int requestId, String captchaImageUrl, HttpClient httpClient, HttpHost httpHost, HttpContext httpContext,
                               String httpHostHeaderValue,
-                              CaptchaAutoIndexProvider captchaAutoIndexProvider);
+                              CaptchaAutoIndexProvider captchaAutoIndexProvider)
+                              throws CaptchaException;
 
     void onCaptchaFailed();
 

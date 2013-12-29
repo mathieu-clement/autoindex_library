@@ -79,14 +79,18 @@ public abstract class CariAutoIndexProvider
      */
     protected abstract String getCariOnlineFullUrl();
 
-    public final PlateOwner getPlateOwner(Plate plate)
-            throws ProviderException, PlateOwnerNotFoundException, PlateOwnerHiddenException, UnsupportedPlateException {
-        return doGetPlateOwner(plate, 0);
+    public final PlateOwner getPlateOwner(Plate plate, int requestId)
+            throws ProviderException, PlateOwnerNotFoundException, PlateOwnerHiddenException, UnsupportedPlateException, CaptchaException, RequestCancelledException {
+        return doGetPlateOwner(plate, requestId, 0);
     }
 
-    public final PlateOwner doGetPlateOwner(Plate plate, int nbTry)
-            throws ProviderException, PlateOwnerNotFoundException, PlateOwnerHiddenException, UnsupportedPlateException {
+    public final PlateOwner doGetPlateOwner(Plate plate, int requestId, int nbTry)
+            throws ProviderException, PlateOwnerNotFoundException, PlateOwnerHiddenException, UnsupportedPlateException, CaptchaException, RequestCancelledException {
         System.out.println("Try " + nbTry + " for plate " + plate);
+
+        if (mustCancel(requestId)) {
+            throw new RequestCancelledException("Request id " + requestId + " was cancelled.", plate, requestId);
+        }
 
         // Headers
         Header urlEncodedContentTypeHeader = new BasicHeader("Content-Type", "application/x-www-form-urlencoded");
@@ -126,7 +130,7 @@ public abstract class CariAutoIndexProvider
         }
 
         String captchaImageUrl = generateCaptchaImageUrl();
-        String captchaValue = captchaHandler.handleCaptchaImage(captchaImageUrl, httpClient, getCariHttpHost(), httpContext, getCariHttpHostname(), this);
+        String captchaValue = captchaHandler.handleCaptchaImage(requestId, captchaImageUrl, httpClient, getCariHttpHost(), httpContext, getCariHttpHostname(), this);
 
         // TODO Doesn't have Cari a TimeOut for the captcha or something like this? Connection can be closed after some time.
         // We have to get that time from the server. Then in the GUI, we show a count down, so the user can see how much time is left to enter the code.
@@ -204,7 +208,7 @@ public abstract class CariAutoIndexProvider
         } catch (CaptchaException e) {
             if (nbTry > MAX_CAPTCHA_TRIES) throw new ProviderException("Too many tries decoding the captcha image",
                     e, plate);
-            return doGetPlateOwner(plate, nbTry + 1); // Call itself again until nbTry above max
+            return doGetPlateOwner(plate, requestId, nbTry + 1); // Call itself again until nbTry above max
         } catch (IgnoreMeException e) {
             throw new ProviderException("Strange error on plate " + plate + ", went back to welcome page. ", e, plate);
         }
@@ -326,5 +330,21 @@ public abstract class CariAutoIndexProvider
     @Override
     public boolean isPlateTypeSupported(PlateType plateType) {
         return supportedPlateTypes.contains(plateType);
+    }
+
+    private Set<Integer> cancelledRequests = new HashSet<Integer>();
+
+    private boolean mustCancel(int requestId) {
+        return cancelledRequests.contains(requestId);
+    }
+
+    @Override
+    public void cancel(int requestId) {
+        cancelledRequests.add(requestId);
+    }
+
+    @Override
+    public boolean isCancelled(int requestId) {
+        return mustCancel(requestId);
     }
 }

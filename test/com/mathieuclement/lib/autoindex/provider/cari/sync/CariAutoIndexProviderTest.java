@@ -20,7 +20,10 @@ import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 
-import java.io.*;
+import java.io.File;
+import java.io.FileOutputStream;
+import java.io.IOException;
+import java.util.Random;
 
 public class CariAutoIndexProviderTest {
     private CariAutoIndexProvider fribourgAutoIndexProvider;
@@ -44,17 +47,13 @@ public class CariAutoIndexProviderTest {
                 httpResponse.getEntity().getContent().close();
             }
 
-            private String solveCaptcha(File file) {
-                try {
-                    return ExecCommand.exec("/home/mathieu/Dropbox/work/prout/decoder_cari.pl " + file.getAbsolutePath());
-                } catch (IOException e) {
-                    e.printStackTrace();
-                }
-                return null;
+            private String solveCaptcha(File file) throws IOException {
+                return ExecCommand.exec("/home/mathieu/Dropbox/work/decode_captcha/cari/decoder_cari.pl " + file
+                        .getAbsolutePath());
             }
 
             @Override
-            public String handleCaptchaImage(String captchaImageUrl, final HttpClient httpClient, HttpHost httpHost, final HttpContext httpContext, String httpHostHeaderValue, final CaptchaAutoIndexProvider captchaAutoIndexProvider) {
+            public String handleCaptchaImage(int requestId, String captchaImageUrl, final HttpClient httpClient, HttpHost httpHost, final HttpContext httpContext, String httpHostHeaderValue, final CaptchaAutoIndexProvider captchaAutoIndexProvider) {
                 System.out.println("Captcha image URL: \"" + captchaImageUrl + "\"");
 
                 try {
@@ -99,6 +98,8 @@ public class CariAutoIndexProviderTest {
 
     }
 
+    Random random = new Random();
+
     @Test
     public void testFribourg() throws Exception {
         /*PlateOwner expectedFr1 = new PlateOwner("Oberson Julien", "Route des Grives 4", "", 1763, "Granges-Paccot");
@@ -106,13 +107,16 @@ public class CariAutoIndexProviderTest {
         */
 
         PlateOwner expectedFr1 = new PlateOwner("Transports Publics Fribourgeois", "Rue Louis-d'Affry 2", "Case postale 1536", 1700, "Fribourg");
-        PlateOwner actualFr1 = fribourgAutoIndexProvider.getPlateOwner(new Plate(300340, PlateType.AUTOMOBILE, cantonFribourg));
+        PlateOwner actualFr1 = fribourgAutoIndexProvider.getPlateOwner(new Plate(300340, PlateType.AUTOMOBILE,
+                cantonFribourg),
+                random.nextInt());
         Assert.assertEquals(expectedFr1, actualFr1);
     }
 
     @Test(expected = PlateOwnerNotFoundException.class)
     public void testFribourgOwnerHidden() throws Exception {
-        fribourgAutoIndexProvider.getPlateOwner(new Plate(6789, PlateType.MOTORCYCLE, cantonFribourg));
+        fribourgAutoIndexProvider.getPlateOwner(new Plate(6789, PlateType.MOTORCYCLE, cantonFribourg),
+                random.nextInt());
     }
 
     @Test
@@ -131,19 +135,22 @@ public class CariAutoIndexProviderTest {
     @Test
     public void testFribourgAgricole() throws Exception {
         PlateOwner expectedFrAgri1 = new PlateOwner("Roux Jean-Daniel", "Route de Macconnens 40", "", 1691, "Villarimboud");
-        PlateOwner actualFrAgri1 = fribourgAutoIndexProvider.getPlateOwner(new Plate(123, PlateType.AGRICULTURAL, cantonFribourg));
+        PlateOwner actualFrAgri1 = fribourgAutoIndexProvider.getPlateOwner(new Plate(123, PlateType.AGRICULTURAL, cantonFribourg),
+                random.nextInt());
         Assert.assertEquals(expectedFrAgri1, actualFrAgri1);
     }
 
     @Test
     public void testValais() throws Exception {
         PlateOwner expectedVs1 = new PlateOwner("Kluser Beat", "Hotel Lötschberg", "", 3917, "Kippel");
-        PlateOwner actualVs1 = valaisAutoIndexProvider.getPlateOwner(new Plate(11111, PlateType.AUTOMOBILE, cantonValais));
+        PlateOwner actualVs1 = valaisAutoIndexProvider.getPlateOwner(new Plate(11111, PlateType.AUTOMOBILE, cantonValais),
+                random.nextInt());
         Assert.assertEquals(expectedVs1, actualVs1);
 
         // This test is interesting to see if HTML unescape worked
         PlateOwner expectedVs2 = new PlateOwner("Defayes Eric", "Route de l'Ecosse 7", "", 1907, "Saxon");
-        PlateOwner actualVs2 = valaisAutoIndexProvider.getPlateOwner(new Plate(22222, PlateType.AUTOMOBILE, cantonValais));
+        PlateOwner actualVs2 = valaisAutoIndexProvider.getPlateOwner(new Plate(22222, PlateType.AUTOMOBILE, cantonValais),
+                random.nextInt());
         Assert.assertEquals(expectedVs2, actualVs2);
     }
 }

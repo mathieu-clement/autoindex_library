@@ -23,6 +23,7 @@ import org.junit.Test;
 import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
+import java.util.Random;
 
 public class ViacarAutoIndexProviderTest {
     private ViacarAutoIndexProvider provider;
@@ -48,7 +49,8 @@ public class ViacarAutoIndexProviderTest {
 
             private String solveCaptcha(File file) {
                 try {
-                    return ExecCommand.exec("/home/mathieu/Dropbox/work/prout/decoder_viacar.pl " + file
+                    return ExecCommand.exec("/home/mathieu/Dropbox/work/decode_captcha/viacar/decoder_viacar.pl " +
+                            file
                             .getAbsolutePath());
                 } catch (IOException e) {
                     e.printStackTrace();
@@ -57,7 +59,7 @@ public class ViacarAutoIndexProviderTest {
             }
 
             @Override
-            public String handleCaptchaImage(String captchaImageUrl, final HttpClient httpClient, HttpHost httpHost, final HttpContext httpContext, String httpHostHeaderValue, final CaptchaAutoIndexProvider captchaAutoIndexProvider) {
+            public String handleCaptchaImage(int requestId, String captchaImageUrl, final HttpClient httpClient, HttpHost httpHost, final HttpContext httpContext, String httpHostHeaderValue, final CaptchaAutoIndexProvider captchaAutoIndexProvider) {
                 System.out.println("Captcha image URL: \"" + captchaImageUrl + "\"");
 
                 try {
@@ -102,7 +104,8 @@ public class ViacarAutoIndexProviderTest {
     @Test
     public void testAg() throws Exception {
         PlateOwner expected = new PlateOwner("Müller Verena", "Hofstrasse 49", "", 5406, "Rütihof");
-        PlateOwner actual = provider.getPlateOwner(new Plate(32413, PlateType.AUTOMOBILE, canton));
+        PlateOwner actual = provider.getPlateOwner(new Plate(32413, PlateType.AUTOMOBILE, canton),
+                new Random().nextInt());
         Assert.assertEquals(expected, actual);
     }
 }
