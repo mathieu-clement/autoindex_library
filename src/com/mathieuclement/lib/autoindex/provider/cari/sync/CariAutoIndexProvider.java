@@ -65,7 +65,7 @@ public abstract class CariAutoIndexProvider
         plateTypeMapping.put(PlateType.INDUSTRIAL, 5);
     }
 
-    private static final int MAX_CAPTCHA_TRIES = 10;
+    private static final int MAX_CAPTCHA_TRIES = 20;
 
     protected CariAutoIndexProvider(CaptchaHandler captchaHandler) {
         super(captchaHandler);
