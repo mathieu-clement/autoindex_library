@@ -4,7 +4,7 @@ import com.mathieuclement.lib.autoindex.provider.common.captcha.CaptchaHandler;
 import org.apache.http.HttpHost;
 
 public class ValaisAutoIndexProvider extends CariAutoIndexProvider {
-    protected ValaisAutoIndexProvider(CaptchaHandler captchaHandler) {
+    public ValaisAutoIndexProvider(CaptchaHandler captchaHandler) {
         super(captchaHandler);
     }
 

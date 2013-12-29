@@ -20,6 +20,7 @@ import org.apache.http.impl.client.AbstractHttpClient;
 import org.apache.http.impl.client.DefaultHttpClient;
 import org.apache.http.message.BasicHeader;
 import org.apache.http.message.BasicNameValuePair;
+import org.apache.http.params.BasicHttpParams;
 import org.apache.http.params.CoreProtocolPNames;
 import org.apache.http.params.HttpParams;
 import org.apache.http.protocol.BasicHttpContext;
@@ -46,6 +47,8 @@ public class ViacarAutoIndexProvider extends CaptchaAutoIndexProvider {
 
     private static final String THIS_IS_THE_CAPTCHA = "THIS_IS_THE_CAPTCHA";
     private final String resultUri = "https://www.viacar.ch/eindex/Result.aspx?Var=1";
+    private final HttpHost httpHost = new HttpHost("www.viacar.ch", 443,
+            "https");
     private String cantonAbbr;
     private static Set<PlateType> supportedPlateTypes = new LinkedHashSet<PlateType>();
 
@@ -55,7 +58,7 @@ public class ViacarAutoIndexProvider extends CaptchaAutoIndexProvider {
         supportedPlateTypes.add(PlateType.AGRICULTURAL);
     }
 
-    private DefaultHttpClient httpClient;
+    private HttpClient httpClient;
     private HttpContext httpContext;
     private HttpUriRequest dummyPageViewRequest;
     // correct name matching the Server certificate!
@@ -96,8 +99,7 @@ public class ViacarAutoIndexProvider extends CaptchaAutoIndexProvider {
         if (httpClient == null) {
             try {
                 // httpClient = new DecompressingHttpClient(new DefaultHttpClient()); // for gzip
-                httpClient = new DefaultHttpClient();
-                HttpParams httpParams = httpClient.getParams();
+                HttpParams httpParams = new BasicHttpParams();
                 httpParams.setParameter(CoreProtocolPNames.PROTOCOL_VERSION, HttpVersion.HTTP_1_1);
                 httpParams.setParameter(CoreProtocolPNames.ORIGIN_SERVER, "https://www.viacar.ch");
                 httpParams.setParameter(CoreProtocolPNames.USER_AGENT,
@@ -105,6 +107,7 @@ public class ViacarAutoIndexProvider extends CaptchaAutoIndexProvider {
                                 "Ubuntu Chromium/25.0.1364.160 Chrome/25.0.1364.160 Safari/537.22");
                 httpParams.setParameter(ClientPNames.COOKIE_POLICY, CookiePolicy.BROWSER_COMPATIBILITY);
                 httpParams.setParameter(ClientPNames.DEFAULT_HEADERS, new ArrayList<Header>());
+                httpClient = new DefaultHttpClient(httpParams);
                 // httpParams.setParameter("http.protocol.single-cookie-header", true);
             } catch (Exception e) {
                 throw new RuntimeException(e);
@@ -122,7 +125,7 @@ public class ViacarAutoIndexProvider extends CaptchaAutoIndexProvider {
             cookieStore = ((AbstractHttpClient) httpClient).getCookieStore();
         }
         try {
-            HttpResponse dummyResponse = httpClient.execute(dummyPageViewRequest, httpContext);
+            HttpResponse dummyResponse = httpClient.execute(httpHost, dummyPageViewRequest, httpContext);
             StatusLine statusLine = dummyResponse.getStatusLine();
             if (statusLine.getStatusCode() != 200) {
                 throw new ProviderException("Bad status when doing the dummy page view request to get a session: " +
@@ -139,8 +142,7 @@ public class ViacarAutoIndexProvider extends CaptchaAutoIndexProvider {
                 throw new NumberOfRequestsExceededException();
             }
 
-            String decodedCaptcha = captchaHandler.handleCaptchaImage(generateCaptchaImageUrl(), httpClient, new HttpHost("www.viacar.ch", 443,
-                    "https"),
+            String decodedCaptcha = captchaHandler.handleCaptchaImage(generateCaptchaImageUrl(), httpClient, httpHost,
                     httpContext,
                     "www.viacar.ch", this);
 

@@ -4,7 +4,7 @@ import com.mathieuclement.lib.autoindex.provider.common.captcha.CaptchaHandler;
 import org.apache.http.HttpHost;
 
 public class FribourgAutoIndexProvider extends CariAutoIndexProvider {
-    protected FribourgAutoIndexProvider(CaptchaHandler captchaHandler) {
+    public FribourgAutoIndexProvider(CaptchaHandler captchaHandler) {
         super(captchaHandler);
     }
 
