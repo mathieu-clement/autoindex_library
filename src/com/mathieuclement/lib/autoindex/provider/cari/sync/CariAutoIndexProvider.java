@@ -44,9 +44,9 @@ import java.util.regex.Pattern;
 
 public abstract class CariAutoIndexProvider
         extends CaptchaAutoIndexProvider {
-    private Map<PlateType, Integer> plateTypeMapping = new LinkedHashMap<PlateType, Integer>();
+    private static Map<PlateType, Integer> plateTypeMapping = new LinkedHashMap<PlateType, Integer>();
 
-    private void initPlateTypeMapping() {
+    private static void initPlateTypeMapping() {
         plateTypeMapping.put(PlateType.AUTOMOBILE, 1);
         plateTypeMapping.put(PlateType.AUTOMOBILE_REPAIR_SHOP, 1);
         plateTypeMapping.put(PlateType.AUTOMOBILE_TEMPORARY, 1);
@@ -319,17 +319,17 @@ public abstract class CariAutoIndexProvider
         return generateCaptchaImageUrl();
     }
 
-    private static Set<PlateType> supportedPlateTypes = new LinkedHashSet<PlateType>();
-
     static {
-        supportedPlateTypes.add(PlateType.AUTOMOBILE);
-        supportedPlateTypes.add(PlateType.MOTORCYCLE);
-        supportedPlateTypes.add(PlateType.AGRICULTURAL);
+        initPlateTypeMapping();
     }
 
     @Override
     public boolean isPlateTypeSupported(PlateType plateType) {
-        return supportedPlateTypes.contains(plateType);
+        try {
+            return plateTypeMapping.get(plateType) != null;
+        } catch (Throwable t) {
+            return false;
+        }
     }
 
     private Set<Integer> cancelledRequests = new HashSet<Integer>();
