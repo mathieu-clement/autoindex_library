@@ -47,8 +47,7 @@ public class ViacarAutoIndexProvider extends CaptchaAutoIndexProvider {
 
     private static final String THIS_IS_THE_CAPTCHA = "THIS_IS_THE_CAPTCHA";
     private final String resultUri = "https://www.viacar.ch/eindex/Result.aspx?Var=1";
-    private final HttpHost httpHost = new HttpHost("www.viacar.ch", 443,
-            "https");
+    private final HttpHost httpHost = new HttpHost("www.viacar.ch", 443, "https");
     private String cantonAbbr;
     private static Set<PlateType> supportedPlateTypes = new LinkedHashSet<PlateType>();
 
@@ -61,7 +60,6 @@ public class ViacarAutoIndexProvider extends CaptchaAutoIndexProvider {
     private HttpClient httpClient;
     private HttpContext httpContext;
     private HttpUriRequest dummyPageViewRequest;
-    // correct name matching the Server certificate!
     private String captchaId = "";
     private CookieStore cookieStore;
     private HttpPost captchaRequest;
@@ -70,10 +68,9 @@ public class ViacarAutoIndexProvider extends CaptchaAutoIndexProvider {
     private HttpPost searchRequest;
     private PlateOwner plateOwner;
     private HttpGet resultRequest;
-    private String debugHtml; // TODO Remove
-    public int MAX_REQUESTS = 3;
+    private String html;
 
-    private static final int MAX_CAPTCHA_TRIES = 10;
+    private static final int MAX_CAPTCHA_TRIES = 20;
 
     public ViacarAutoIndexProvider(String cantonAbbr, CaptchaHandler captchaHandler) {
         super(captchaHandler);
@@ -138,12 +135,12 @@ public class ViacarAutoIndexProvider extends CaptchaAutoIndexProvider {
             }
             captchaPostParams = makeFormParams(dummyResponse.getEntity().getContent(), "utf-8", getLoginUrl());
 
-            captchaId = extractCaptchaId(debugHtml);
+            captchaId = extractCaptchaId(html);
             //dummyResponse.getEntity().getContent().close();
-            // System.out.println(debugHtml);
+            // System.out.println(html);
 
             // Check not requests exceeded
-            if (debugHtml.contains("Sie haben die Anzahl")) { // zul&auml;ssiger Abfragen f&uuml;r heute erreicht."))
+            if (html.contains("Sie haben die Anzahl")) { // zul&auml;ssiger Abfragen f&uuml;r heute erreicht."))
                 throw new NumberOfRequestsExceededException();
             }
 
@@ -205,15 +202,15 @@ public class ViacarAutoIndexProvider extends CaptchaAutoIndexProvider {
             }
         }
         // Check we were not discovered
-        if (debugHtml.contains("Bitte rufen Sie den Autoindex")) {
+        if (html.contains("Bitte rufen Sie den Autoindex")) {
             throw new ProviderException("Not well emulated. It tells us we're not on the autoindex website!", plate);
         }
         // Check this isn't the / (root) page https://www.viacar.ch/
-        if (debugHtml.contains("Diese Seite oder dieser Service ist im Moment")) {
+        if (html.contains("Diese Seite oder dieser Service ist im Moment")) {
             throw new ProviderException("Unavailable message!", plate);
         }
         // Check no timeout
-        if (debugHtml.contains("Die Zeit ist abgelaufen, bitte neu anmelden.")) {
+        if (html.contains("Die Zeit ist abgelaufen, bitte neu anmelden.")) {
             throw new ProviderException("Time out from provider", plate);
         }
 
@@ -255,8 +252,7 @@ public class ViacarAutoIndexProvider extends CaptchaAutoIndexProvider {
     private PlateOwner htmlToPlateOwner(HttpResponse resultResponse, String baseUri, Plate plate) throws IOException, PlateOwnerNotFoundException {
         Document doc = Jsoup.parse(resultResponse.getEntity().getContent(),
                 "utf-8", baseUri);
-        debugHtml = doc.normalise().outerHtml();
-        System.out.println("Result response");
+        html = doc.normalise().outerHtml();
 
         Elements elements = doc.select("table[bgcolor=whitesmoke]");
 
@@ -381,6 +377,17 @@ public class ViacarAutoIndexProvider extends CaptchaAutoIndexProvider {
     }
 
 
+    /*private void printProgress(int step, int numberOfSteps) {
+        System.out.print("\r|");
+        for (int i = 0; i < step; i++) {
+            System.out.print("*");
+        }
+        for (int i = 0; i < numberOfSteps - step; i++) {
+            System.out.print(" ");
+        }
+        System.out.println("|");
+    }*/
+
     private void printProgress(int step, int numberOfSteps) {
         System.out.print("\r|");
         for (int i = 0; i < step; i++) {
@@ -405,7 +412,7 @@ public class ViacarAutoIndexProvider extends CaptchaAutoIndexProvider {
 
         // Look for "<input>" tags
         Document doc = Jsoup.parse(content, encoding, pageUri);
-        debugHtml = doc.outerHtml();
+        html = doc.outerHtml();
         // DO NOT CALL NORMALIZE! It will delete the style attribute we use to detect where is the captcha.
         Elements elements = doc.select("input");
         for (Element element : elements) {
