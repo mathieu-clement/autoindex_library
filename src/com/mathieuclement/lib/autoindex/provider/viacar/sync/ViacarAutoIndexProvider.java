@@ -48,6 +48,7 @@ public class ViacarAutoIndexProvider extends CaptchaAutoIndexProvider {
     private static final String THIS_IS_THE_CAPTCHA = "THIS_IS_THE_CAPTCHA";
     private final String resultUri = "https://www.viacar.ch/eindex/Result.aspx?Var=1";
     private final HttpHost httpHost = new HttpHost("www.viacar.ch", 443, "https");
+    private final int PROGRESS_STEPS = 40;
     private String cantonAbbr;
     private static Set<PlateType> supportedPlateTypes = new LinkedHashSet<PlateType>();
 
@@ -96,6 +97,8 @@ public class ViacarAutoIndexProvider extends CaptchaAutoIndexProvider {
         if (mustCancelRequest(requestId)) {
             throw new RequestCancelledException("Request id " + requestId + " was cancelled.", plate, requestId);
         }
+
+        printProgress(0, PROGRESS_STEPS);
 
         System.out.println("Try " + nbTry + " for plate " + plate);
 
@@ -171,8 +174,6 @@ public class ViacarAutoIndexProvider extends CaptchaAutoIndexProvider {
     }
 
     protected PlateOwner doRequestAfterCaptchaEntered(String captchaCode, Plate plate, HttpClient httpClient, HttpContext httpContext) throws ProviderException, CaptchaException, IOException, PlateOwnerNotFoundException {
-        printProgress(0, 30);
-
         // Send captcha
         try {
             captchaRequest = makeCaptchaRequest(captchaCode);
@@ -183,7 +184,7 @@ public class ViacarAutoIndexProvider extends CaptchaAutoIndexProvider {
         HttpResponse captchaResponse;
         try {
             captchaResponse = httpClient.execute(captchaRequest, httpContext);
-            printProgress(10, 30);
+            printProgress(10, PROGRESS_STEPS);
             if (captchaResponse.getStatusLine().getStatusCode() != 200) {
                 throw new ProviderException("Got status " + captchaResponse.getStatusLine()
                         .getStatusCode()
@@ -222,10 +223,11 @@ public class ViacarAutoIndexProvider extends CaptchaAutoIndexProvider {
         }
 
         captchaHandler.onCaptchaSuccessful();
+        printProgress(20, PROGRESS_STEPS);
 
         // Perform search
         HttpResponse searchResponse = httpClient.execute(searchRequest, httpContext);
-        printProgress(20, 30);
+        printProgress(30, PROGRESS_STEPS);
         if (searchResponse.getStatusLine().getStatusCode() != 200 && searchResponse.getStatusLine().getStatusCode
                 () != 302) {
             throw new ProviderException("Got status " + searchResponse.getStatusLine()
@@ -242,7 +244,7 @@ public class ViacarAutoIndexProvider extends CaptchaAutoIndexProvider {
         // Execute request for the real result page
         resultRequest = makeResultRequest();
         HttpResponse resultResponse = httpClient.execute(resultRequest, httpContext);
-        printProgress(30, 30);
+        printProgress(PROGRESS_STEPS, PROGRESS_STEPS);
 
         // Extract the plate owner from the HTML response
         plateOwner = htmlToPlateOwner(resultResponse, resultUri, plate);
@@ -378,12 +380,12 @@ public class ViacarAutoIndexProvider extends CaptchaAutoIndexProvider {
     }
 
 
-    /*private void printProgress(int step, int numberOfSteps) {
+    /*private void printProgress(int step, int PROGRESS_STEPS) {
         System.out.print("\r|");
         for (int i = 0; i < step; i++) {
             System.out.print("*");
         }
-        for (int i = 0; i < numberOfSteps - step; i++) {
+        for (int i = 0; i < PROGRESS_STEPS - step; i++) {
             System.out.print(" ");
         }
         System.out.println("|");

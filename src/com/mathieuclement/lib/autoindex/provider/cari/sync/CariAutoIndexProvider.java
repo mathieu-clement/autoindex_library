@@ -92,6 +92,8 @@ public abstract class CariAutoIndexProvider
             throw new RequestCancelledException("Request id " + requestId + " was cancelled.", plate, requestId);
         }
 
+        fireProgress(0, PROGRESS_STEPS);
+
         // Headers
         Header urlEncodedContentTypeHeader = new BasicHeader("Content-Type", "application/x-www-form-urlencoded");
         Header charsetHeader = new BasicHeader("Accept-Charset", "utf-8");
@@ -129,8 +131,12 @@ public abstract class CariAutoIndexProvider
             throw new ProviderException("Could not do the dummy page view request to get a session.", e, plate);
         }
 
+        fireProgress(10, PROGRESS_STEPS);
+
         String captchaImageUrl = generateCaptchaImageUrl();
         String captchaValue = captchaHandler.handleCaptchaImage(requestId, captchaImageUrl, httpClient, getCariHttpHost(), httpContext, getCariHttpHostname(), this);
+
+        fireProgress(20, PROGRESS_STEPS);
 
         // TODO Doesn't have Cari a TimeOut for the captcha or something like this? Connection can be closed after some time.
         // We have to get that time from the server. Then in the GUI, we show a count down, so the user can see how much time is left to enter the code.
@@ -193,8 +199,10 @@ public abstract class CariAutoIndexProvider
                         + " from server when executing request to get plate owner of plate " + plate, plate);
             }
 
+
             // Extract the plate owner from the HTML response
             PlateOwner plateOwner = htmlToPlateOwner(plateOwnerResponse, plate);
+            fireProgress(PROGRESS_STEPS, PROGRESS_STEPS);
 
             // Close connection and release resources
             httpClient.getConnectionManager().shutdown();
@@ -348,8 +356,10 @@ public abstract class CariAutoIndexProvider
         return mustCancel(requestId);
     }
 
+    private static final int PROGRESS_STEPS = 30;
+
     @Override
     public boolean isIndeterminateProgress() {
-        return true;
+        return false;
     }
 }
