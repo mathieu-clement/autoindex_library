@@ -1,6 +1,10 @@
 package com.mathieuclement.lib.autoindex.provider.common.captcha;
 
 import com.mathieuclement.lib.autoindex.provider.common.AutoIndexProvider;
+import com.mathieuclement.lib.autoindex.provider.common.ProgressListener;
+
+import java.util.LinkedList;
+import java.util.List;
 
 /**
  * An AutoIndexProvider which requires captcha.<br/>
@@ -15,4 +19,22 @@ public abstract class CaptchaAutoIndexProvider implements AutoIndexProvider {
     }
 
     public abstract String regenerateCaptchaImageUrl();
+
+    private List<ProgressListener> progressListeners = new LinkedList<ProgressListener>();
+
+    public void addListener(ProgressListener listener) {
+        progressListeners.add(listener);
+    }
+
+    public void removeListener(ProgressListener listener) {
+        progressListeners.remove(listener);
+    }
+
+    public void fireProgress(int current, int maximum) {
+        for (ProgressListener progressListener : progressListeners) {
+            progressListener.onProgress(current, maximum);
+        }
+    }
+
+    public abstract boolean isIndeterminateProgress();
 }

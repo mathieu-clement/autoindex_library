@@ -347,4 +347,9 @@ public abstract class CariAutoIndexProvider
     public boolean isCancelled(int requestId) {
         return mustCancel(requestId);
     }
+
+    @Override
+    public boolean isIndeterminateProgress() {
+        return true;
+    }
 }

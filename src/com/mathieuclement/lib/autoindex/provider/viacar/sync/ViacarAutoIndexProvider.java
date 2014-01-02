@@ -79,8 +79,9 @@ public class ViacarAutoIndexProvider extends CaptchaAutoIndexProvider {
 
     @Override
     public String regenerateCaptchaImageUrl() {
-        return null;
+        throw new UnsupportedOperationException();
     }
+
 
     @Override
     public PlateOwner getPlateOwner(Plate plate, int requestId) throws ProviderException, PlateOwnerNotFoundException,
@@ -389,14 +390,12 @@ public class ViacarAutoIndexProvider extends CaptchaAutoIndexProvider {
     }*/
 
     private void printProgress(int step, int numberOfSteps) {
-        System.out.print("\r|");
-        for (int i = 0; i < step; i++) {
-            System.out.print("*");
-        }
-        for (int i = 0; i < numberOfSteps - step; i++) {
-            System.out.print(" ");
-        }
-        System.out.println("|");
+        fireProgress(step, numberOfSteps);
+    }
+
+    @Override
+    public boolean isIndeterminateProgress() {
+        return false;
     }
 
     private String extractCaptchaId(String html) {
