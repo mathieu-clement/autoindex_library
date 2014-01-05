@@ -131,12 +131,12 @@ public abstract class CariAutoIndexProvider
             throw new ProviderException("Could not do the dummy page view request to get a session.", e, plate);
         }
 
-        fireProgress(10, PROGRESS_STEPS);
+        fireProgress(1, PROGRESS_STEPS);
 
         String captchaImageUrl = generateCaptchaImageUrl();
         String captchaValue = captchaHandler.handleCaptchaImage(requestId, captchaImageUrl, httpClient, getCariHttpHost(), httpContext, getCariHttpHostname(), this);
 
-        fireProgress(20, PROGRESS_STEPS);
+        fireProgress(2, PROGRESS_STEPS);
 
         // TODO Doesn't have Cari a TimeOut for the captcha or something like this? Connection can be closed after some time.
         // We have to get that time from the server. Then in the GUI, we show a count down, so the user can see how much time is left to enter the code.
@@ -356,7 +356,7 @@ public abstract class CariAutoIndexProvider
         return mustCancel(requestId);
     }
 
-    private static final int PROGRESS_STEPS = 30;
+    private static final int PROGRESS_STEPS = 3;
 
     @Override
     public boolean isIndeterminateProgress() {
