@@ -23,16 +23,22 @@ public abstract class CaptchaAutoIndexProvider implements AutoIndexProvider {
     private List<ProgressListener> progressListeners = new LinkedList<ProgressListener>();
 
     public void addListener(ProgressListener listener) {
-        progressListeners.add(listener);
+        synchronized (progressListeners) {
+            progressListeners.add(listener);
+        }
     }
 
     public void removeListener(ProgressListener listener) {
-        progressListeners.remove(listener);
+        synchronized (progressListeners) {
+            progressListeners.remove(listener);
+        }
     }
 
     public void fireProgress(int current, int maximum) {
-        for (ProgressListener progressListener : progressListeners) {
-            progressListener.onProgress(current, maximum);
+        synchronized (progressListeners) {
+            for (ProgressListener progressListener : progressListeners) {
+                progressListener.onProgress(current, maximum);
+            }
         }
     }
 
