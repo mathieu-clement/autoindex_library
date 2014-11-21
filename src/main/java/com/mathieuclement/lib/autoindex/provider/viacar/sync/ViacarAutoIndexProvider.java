@@ -29,6 +29,8 @@ import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
 import org.jsoup.nodes.Element;
 import org.jsoup.select.Elements;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -44,6 +46,7 @@ import java.util.regex.Pattern;
 
 public class ViacarAutoIndexProvider extends CaptchaAutoIndexProvider {
 
+    private static final Logger LOGGER = LoggerFactory.getLogger("autoindex.ViacarAutoIndexProvider");
 
     private static final String THIS_IS_THE_CAPTCHA = "THIS_IS_THE_CAPTCHA";
     private final String resultUri = "https://www.viacar.ch/eindex/Result.aspx?Var=1";
@@ -100,7 +103,7 @@ public class ViacarAutoIndexProvider extends CaptchaAutoIndexProvider {
 
         printProgress(0, PROGRESS_STEPS);
 
-        System.out.println("Try " + nbTry + " for plate " + plate);
+        LOGGER.debug("Try " + nbTry + " for plate " + plate);
 
         if (httpClient == null) {
             try {
@@ -268,9 +271,7 @@ public class ViacarAutoIndexProvider extends CaptchaAutoIndexProvider {
 
         for (Element element : elements) {
             String text = element.text();
-            System.out.println();
-            System.out.println("Text: \n" + text);
-            System.out.println();
+            LOGGER.info("Text: \n" + text);
             Matcher matcher = pattern.matcher(text);
             if (matcher != null) {
                 while (matcher.find()) {

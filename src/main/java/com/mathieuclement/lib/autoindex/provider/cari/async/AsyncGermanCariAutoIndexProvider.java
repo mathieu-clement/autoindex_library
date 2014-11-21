@@ -30,7 +30,7 @@ public abstract class AsyncGermanCariAutoIndexProvider extends AsyncCariAutoInde
         // Check presence of warning (shown on Fribourg webpage)
         /*
         if(htmlPage.contains("iframe_warning")) {
-            logger.warning("Found a warning (iframe_warning) on page!");
+            LOGGER.warn("Found a warning (iframe_warning) on page!");
         }
         */
 

@@ -26,6 +26,8 @@ import org.apache.http.params.HttpParams;
 import org.apache.http.protocol.BasicHttpContext;
 import org.apache.http.protocol.HttpContext;
 import org.bouncycastle.jce.provider.BouncyCastleProvider;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.io.File;
 import java.io.FileInputStream;
@@ -33,7 +35,6 @@ import java.io.IOException;
 import java.io.UnsupportedEncodingException;
 import java.security.Security;
 import java.util.*;
-import java.util.logging.Logger;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -271,7 +272,7 @@ public abstract class AsyncCariAutoIndexProvider extends AsyncAutoIndexProvider 
 
     protected abstract String getCariHttpHostname();
 
-    private final Logger logger = Logger.getLogger("CariAutoIndexProvider");
+    private final Logger logger = LoggerFactory.getLogger("autoindex.AsyncCariAutoIndexProvider");
 
     private static final Pattern plateOwnerPattern = Pattern.compile("<td class='libelle'>(.+)\\s*</td>\\s+<td( nowrap)?>\\s*(.+)\\s*</td>");
 
@@ -282,7 +283,7 @@ public abstract class AsyncCariAutoIndexProvider extends AsyncAutoIndexProvider 
         // Check presence of warning (shown on Fribourg webpage)
         /*
         if(htmlPage.contains("iframe_warning")) {
-            logger.warning("Found a warning (iframe_warning) on page!");
+            LOGGER.warn("Found a warning (iframe_warning) on page!");
         }
         */
 

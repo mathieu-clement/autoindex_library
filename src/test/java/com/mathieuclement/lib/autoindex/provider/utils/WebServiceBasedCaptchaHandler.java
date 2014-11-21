@@ -5,19 +5,6 @@ import com.mathieuclement.lib.autoindex.provider.common.AutoIndexProvider;
 import com.mathieuclement.lib.autoindex.provider.common.captcha.CaptchaAutoIndexProvider;
 import com.mathieuclement.lib.autoindex.provider.common.captcha.CaptchaException;
 import com.mathieuclement.lib.autoindex.provider.common.captcha.CaptchaHandler;
-
-import java.io.File;
-import java.io.FileOutputStream;
-import java.io.IOException;
-import java.io.UnsupportedEncodingException;
-import java.lang.ref.WeakReference;
-import java.nio.charset.Charset;
-
-import com.mathieuclement.lib.autoindex.provider.cari.sync.CariAutoIndexProvider;
-import com.mathieuclement.lib.autoindex.provider.common.AutoIndexProvider;
-import com.mathieuclement.lib.autoindex.provider.common.captcha.CaptchaAutoIndexProvider;
-import com.mathieuclement.lib.autoindex.provider.common.captcha.CaptchaException;
-import com.mathieuclement.lib.autoindex.provider.common.captcha.CaptchaHandler;
 import org.apache.http.HttpEntity;
 import org.apache.http.HttpHost;
 import org.apache.http.HttpResponse;
@@ -30,12 +17,13 @@ import org.apache.http.entity.mime.content.StringBody;
 import org.apache.http.message.BasicHttpRequest;
 import org.apache.http.protocol.HttpContext;
 import org.apache.http.util.EntityUtils;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.UnsupportedEncodingException;
-import java.lang.ref.WeakReference;
 import java.nio.charset.Charset;
 
 /**
@@ -44,6 +32,8 @@ import java.nio.charset.Charset;
  */
 public class WebServiceBasedCaptchaHandler implements CaptchaHandler {
 
+    private static final Logger LOGGER = LoggerFactory.getLogger("autoindex.WebServiceBasedCaptchaHandler");
+
     public String handleCaptchaImage(int requestId, String captchaImageUrl, HttpClient httpClient, HttpHost httpHost,
                                      HttpContext httpContext,
                                      String httpHostHeaderValue,
@@ -51,7 +41,7 @@ public class WebServiceBasedCaptchaHandler implements CaptchaHandler {
         String s = null;
         File captchaImageFile = null;
         try {
-            System.out.println("Downloading image...");
+            LOGGER.debug("Downloading image...");
             BasicHttpRequest httpRequest = new BasicHttpRequest("GET", captchaImageUrl, HttpVersion.HTTP_1_1);
             httpRequest.setHeader("host", httpHostHeaderValue);
             HttpResponse httpResponse = httpClient.execute(httpHost, httpRequest, httpContext);
@@ -64,14 +54,14 @@ public class WebServiceBasedCaptchaHandler implements CaptchaHandler {
             try {
                 s = solveCaptcha(captchaImageFile, httpClient, captchaAutoIndexProvider).replace("\n", "");
             } catch (Exception e) {
-                System.err.println("Failed to decode captcha");
+                LOGGER.warn("Failed to decode captcha");
                 throw e;
             }
 
         } catch (Exception e) {
             if (!captchaAutoIndexProvider.isCancelled(requestId)) {
                 captchaAutoIndexProvider.cancel(requestId);
-                System.err.println("Failed to download or open captcha image");
+                LOGGER.error("Failed to download or open captcha image");
                 throw new CaptchaException(e);
             }
         } finally {
@@ -103,8 +93,8 @@ public class WebServiceBasedCaptchaHandler implements CaptchaHandler {
         httpPost.setEntity(reqEntity);
 
         HttpResponse response = httpClient.execute(httpPost);
-        System.out.println("----------------------------------------");
-        System.out.println(response.getStatusLine());
+        LOGGER.debug("----------------------------------------");
+        LOGGER.debug(response.getStatusLine().toString());
         if (response.getStatusLine().getStatusCode() != 200) throw new RuntimeException("Could not send captcha " +
                 "(server error, code " + response.getStatusLine().getStatusCode() + ")");
         HttpEntity resEntity = response.getEntity();

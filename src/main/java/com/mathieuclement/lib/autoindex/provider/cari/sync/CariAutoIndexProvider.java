@@ -35,16 +35,20 @@ import org.apache.http.params.HttpParams;
 import org.apache.http.protocol.BasicHttpContext;
 import org.apache.http.protocol.HttpContext;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
+
 import java.io.IOException;
 import java.io.UnsupportedEncodingException;
 import java.util.*;
-import java.util.logging.Logger;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 public abstract class CariAutoIndexProvider
         extends CaptchaAutoIndexProvider {
     private static Map<PlateType, Integer> plateTypeMapping = new LinkedHashMap<PlateType, Integer>();
+    private static final Logger LOGGER = LoggerFactory.getLogger("autoindex.CariAutoIndexProvider");
 
     private static void initPlateTypeMapping() {
         plateTypeMapping.put(PlateType.AUTOMOBILE, 1);
@@ -86,7 +90,7 @@ public abstract class CariAutoIndexProvider
 
     public final PlateOwner doGetPlateOwner(Plate plate, int requestId, int nbTry)
             throws ProviderException, PlateOwnerNotFoundException, PlateOwnerHiddenException, UnsupportedPlateException, CaptchaException, RequestCancelledException {
-        System.out.println("Try " + nbTry + " for plate " + plate);
+        LOGGER.debug("Try " + nbTry + " for plate " + plate);
 
         if (mustCancel(requestId)) {
             throw new RequestCancelledException("Request id " + requestId + " was cancelled.", plate, requestId);
@@ -226,7 +230,7 @@ public abstract class CariAutoIndexProvider
 
     protected abstract String getCariHttpHostname();
 
-    private final Logger logger = Logger.getLogger("CariAutoIndexProvider");
+    private final Logger logger = LoggerFactory.getLogger("CariAutoIndexProvider");
 
     private static final Pattern plateOwnerPattern = Pattern.compile("<td class='libelle'>(.+)\\s*</td>\\s+<td( nowrap)?>\\s*(.+)\\s*</td>");
 
@@ -236,7 +240,7 @@ public abstract class CariAutoIndexProvider
         // Check presence of warning (shown on Fribourg webpage)
         /*
         if(htmlPage.contains("iframe_warning")) {
-            logger.warning("Found a warning (iframe_warning) on page!");
+            LOGGER.warn("Found a warning (iframe_warning) on page!");
         }
         */
 
