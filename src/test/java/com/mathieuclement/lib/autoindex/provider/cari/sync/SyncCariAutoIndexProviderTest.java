@@ -4,28 +4,17 @@ import com.mathieuclement.lib.autoindex.canton.Canton;
 import com.mathieuclement.lib.autoindex.plate.Plate;
 import com.mathieuclement.lib.autoindex.plate.PlateOwner;
 import com.mathieuclement.lib.autoindex.plate.PlateType;
-import com.mathieuclement.lib.autoindex.provider.common.ExecCommand;
-import com.mathieuclement.lib.autoindex.provider.common.captcha.CaptchaAutoIndexProvider;
 import com.mathieuclement.lib.autoindex.provider.common.captcha.CaptchaHandler;
 import com.mathieuclement.lib.autoindex.provider.exception.PlateOwnerNotFoundException;
-import junit.framework.Assert;
-import org.apache.http.HttpHost;
-import org.apache.http.HttpResponse;
-import org.apache.http.HttpVersion;
-import org.apache.http.client.HttpClient;
-import org.apache.http.client.methods.HttpGet;
-import org.apache.http.message.BasicHttpRequest;
-import org.apache.http.protocol.HttpContext;
+import com.mathieuclement.lib.autoindex.provider.utils.WebServiceBasedCaptchaHandler;
 import org.junit.After;
+import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
 
-import java.io.File;
-import java.io.FileOutputStream;
-import java.io.IOException;
 import java.util.Random;
 
-public class CariAutoIndexProviderTest {
+public class SyncCariAutoIndexProviderTest {
     private CariAutoIndexProvider fribourgAutoIndexProvider;
     private CariAutoIndexProvider valaisAutoIndexProvider;
     private Canton cantonFribourg;
@@ -33,58 +22,11 @@ public class CariAutoIndexProviderTest {
 
     @Before
     public void setUp() throws Exception {
-        CaptchaHandler autoCaptchaHandler = new CaptchaHandler() {
+        // Solving captcha locally:
+        //return ExecCommand.exec("/home/mathieu/Dropbox/work/decode_captcha/cari/decoder_cari.pl " + file
+        //        .getAbsolutePath());
 
-            public File captchaImageFile;
-
-            private void generateCaptchaImage(CaptchaAutoIndexProvider autoIndexProvider, HttpClient httpClient, HttpContext httpContext) throws IOException {
-                System.out.println("Downloading image...");
-                HttpResponse httpResponse = httpClient.execute(new HttpGet(autoIndexProvider.regenerateCaptchaImageUrl()), httpContext);
-                captchaImageFile = File.createTempFile("cari-captcha", ".jpg");
-                FileOutputStream fos = new FileOutputStream(captchaImageFile);
-                httpResponse.getEntity().writeTo(fos);
-                fos.close();
-                httpResponse.getEntity().getContent().close();
-            }
-
-            private String solveCaptcha(File file) throws IOException {
-                return ExecCommand.exec("/home/mathieu/Dropbox/work/decode_captcha/cari/decoder_cari.pl " + file
-                        .getAbsolutePath());
-            }
-
-            @Override
-            public String handleCaptchaImage(int requestId, String captchaImageUrl, final HttpClient httpClient, HttpHost httpHost, final HttpContext httpContext, String httpHostHeaderValue, final CaptchaAutoIndexProvider captchaAutoIndexProvider) {
-                System.out.println("Captcha image URL: \"" + captchaImageUrl + "\"");
-
-                try {
-                    System.out.println("Downloading image...");
-                    BasicHttpRequest httpRequest = new BasicHttpRequest("GET", captchaImageUrl, HttpVersion.HTTP_1_1);
-                    httpRequest.setHeader("host", httpHostHeaderValue);
-                    HttpResponse httpResponse = httpClient.execute(httpHost, httpRequest, httpContext);
-                    captchaImageFile = File.createTempFile("cari-captcha", ".jpg");
-                    FileOutputStream fos = new FileOutputStream(captchaImageFile);
-                    httpResponse.getEntity().writeTo(fos);
-                    fos.close();
-                    httpResponse.getEntity().getContent().close();
-
-                    return solveCaptcha(captchaImageFile);
-                } catch (IOException e) {
-                    System.err.println("Failed to download or open captcha image");
-                    e.printStackTrace();
-                }
-                return null;
-            }
-
-            @Override
-            public void onCaptchaFailed() {
-                System.err.println("Captcha was NOT correct!");
-            }
-
-            @Override
-            public void onCaptchaSuccessful() {
-                System.out.println("Captcha was correct.");
-            }
-        };
+        CaptchaHandler autoCaptchaHandler = new WebServiceBasedCaptchaHandler();
 
         fribourgAutoIndexProvider = new FribourgAutoIndexProvider(autoCaptchaHandler);
         valaisAutoIndexProvider = new ValaisAutoIndexProvider(autoCaptchaHandler);
