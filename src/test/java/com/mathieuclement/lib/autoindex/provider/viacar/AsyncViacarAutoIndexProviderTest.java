@@ -49,7 +49,7 @@ public class AsyncViacarAutoIndexProviderTest {
         canton = new Canton(CANTON_ABBR, true, provider);
     }
 
-    @Test
+    //@Test // Test is disabled
     public void testWithDialog() throws Exception {
 
         // Request on another thread

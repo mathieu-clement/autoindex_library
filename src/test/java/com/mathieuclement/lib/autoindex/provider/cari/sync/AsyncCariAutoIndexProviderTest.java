@@ -40,7 +40,7 @@ public class AsyncCariAutoIndexProviderTest {
 
     }
 
-    @Test
+    //@Test // Test is disabled
     public void testWithDialog() throws Exception {
         Canton cantonFribourg = new Canton("FR", true, new AsyncFribourgAutoIndexProvider());
         openDiag(cantonFribourg);
