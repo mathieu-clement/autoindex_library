@@ -23,7 +23,7 @@ public abstract class AsyncAutoIndexProvider {
     public abstract boolean isCaptchaUppercaseOnly();
 
     /**
-     * Do the same as {@link AutoIndexProvider#getPlateOwner(com.mathieuclement.lib.autoindex.plate.Plate)}, except that this method returns immediately
+     * Do the same as {@link AutoIndexProvider#getPlateOwner(com.mathieuclement.lib.autoindex.plate.Plate, int)}, except that this method returns immediately
      * and a event is thrown to captchaListeners of this class. See {@link #addListener(CaptchaListener)}
      *
      * @param plate Requested plate
