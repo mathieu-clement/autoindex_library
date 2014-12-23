@@ -230,8 +230,6 @@ public abstract class CariAutoIndexProvider
 
     protected abstract String getCariHttpHostname();
 
-    private final Logger logger = LoggerFactory.getLogger("CariAutoIndexProvider");
-
     private static final Pattern plateOwnerPattern = Pattern.compile("<td class='libelle'>(.+)\\s*</td>\\s+<td( nowrap)?>\\s*(.+)\\s*</td>");
 
     private PlateOwner htmlToPlateOwner(HttpResponse response, Plate plate) throws IOException, PlateOwnerDataException, CaptchaException, ProviderException, PlateOwnerNotFoundException, PlateOwnerHiddenException, IgnoreMeException {

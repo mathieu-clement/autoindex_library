@@ -3,6 +3,7 @@ package com.mathieuclement.lib.autoindex.provider.proxy;
 import com.mathieuclement.lib.autoindex.plate.Plate;
 import com.mathieuclement.lib.autoindex.plate.PlateOwner;
 import com.mathieuclement.lib.autoindex.plate.PlateType;
+import com.mathieuclement.lib.autoindex.provider.common.ProgressListener;
 import com.mathieuclement.lib.autoindex.provider.common.captcha.CaptchaAutoIndexProvider;
 import com.mathieuclement.lib.autoindex.provider.common.captcha.CaptchaException;
 import com.mathieuclement.lib.autoindex.provider.common.captcha.CaptchaHandler;
@@ -184,5 +185,20 @@ public class CaptchaAutoIndexProxy extends CaptchaAutoIndexProvider {
     @Override
     public boolean isIndeterminateProgress() {
         return realProvider.isIndeterminateProgress();
+    }
+
+    @Override
+    public void addListener(ProgressListener listener) {
+        realProvider.addListener(listener);
+    }
+
+    @Override
+    public void removeListener(ProgressListener listener) {
+        realProvider.removeListener(listener);
+    }
+
+    @Override
+    public void fireProgress(int current, int maximum) {
+        realProvider.fireProgress(current, maximum);
     }
 }
