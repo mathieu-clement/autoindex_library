@@ -26,8 +26,6 @@ import org.apache.http.params.HttpParams;
 import org.apache.http.protocol.BasicHttpContext;
 import org.apache.http.protocol.HttpContext;
 import org.bouncycastle.jce.provider.BouncyCastleProvider;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import java.io.File;
 import java.io.FileInputStream;
@@ -271,8 +269,6 @@ public abstract class AsyncCariAutoIndexProvider extends AsyncAutoIndexProvider 
     protected abstract HttpHost getCariHttpHost();
 
     protected abstract String getCariHttpHostname();
-
-    private final Logger logger = LoggerFactory.getLogger("autoindex.AsyncCariAutoIndexProvider");
 
     private static final Pattern plateOwnerPattern = Pattern.compile("<td class='libelle'>(.+)\\s*</td>\\s+<td( nowrap)?>\\s*(.+)\\s*</td>");
 

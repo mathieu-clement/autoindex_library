@@ -9,11 +9,11 @@ import org.junit.Test;
 
 import static org.junit.Assert.assertEquals;
 
-public class AutoIndexProxyTest {
+public class CaptchaAutoIndexProxyTest {
 
     @Test
     public void testGetPlateOwner() throws Exception {
-        AutoIndexProxy proxy = new AutoIndexProxy(null);
+        CaptchaAutoIndexProxy proxy = new CaptchaAutoIndexProxy(null, "toto@noel.ch", null);
         Plate plate = new Plate(61711, PlateType.AUTOMOBILE,
                 new Canton("FR", false, (AutoIndexProvider) null));
         PlateOwner expected = new PlateOwner("Mathieu Clément",
