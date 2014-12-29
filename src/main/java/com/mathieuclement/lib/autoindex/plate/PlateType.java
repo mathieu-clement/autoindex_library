@@ -44,7 +44,19 @@ public final class PlateType {
     }
 
     @Override
-    public boolean equals(Object obj) {
-        return obj instanceof PlateType && name.equals(((PlateType) obj).getName());
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+
+        PlateType plateType = (PlateType) o;
+
+        if (!name.equals(plateType.name)) return false;
+
+        return true;
+    }
+
+    @Override
+    public int hashCode() {
+        return name.hashCode();
     }
 }

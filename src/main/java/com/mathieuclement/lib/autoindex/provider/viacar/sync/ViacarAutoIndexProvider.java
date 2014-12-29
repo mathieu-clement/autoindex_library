@@ -66,9 +66,9 @@ public class ViacarAutoIndexProvider extends CaptchaAutoIndexProvider {
     private static final Logger LOGGER = LoggerFactory.getLogger("autoindex.ViacarAutoIndexProvider");
 
     private static final String THIS_IS_THE_CAPTCHA = "THIS_IS_THE_CAPTCHA";
-    private final String resultUri = "https://www.viacar.ch/eindex/Result.aspx?Var=1";
+    private final static String RESULT_URI = "https://www.viacar.ch/eindex/Result.aspx?Var=1";
     private final HttpHost httpHost = new HttpHost("www.viacar.ch", 443, "https");
-    private final int PROGRESS_STEPS = 4;
+    private final static int PROGRESS_STEPS = 4;
     private String cantonAbbr;
     private static Set<PlateType> supportedPlateTypes = new LinkedHashSet<PlateType>();
 
@@ -269,7 +269,7 @@ public class ViacarAutoIndexProvider extends CaptchaAutoIndexProvider {
         printProgress(PROGRESS_STEPS, PROGRESS_STEPS);
 
         // Extract the plate owner from the HTML response
-        plateOwner = htmlToPlateOwner(resultResponse, resultUri, plate);
+        plateOwner = htmlToPlateOwner(resultResponse, RESULT_URI, plate);
 
         return plateOwner;
     }
@@ -299,7 +299,7 @@ public class ViacarAutoIndexProvider extends CaptchaAutoIndexProvider {
                         String ownerName = matcher.group(2);
                         String street = matcher.group(3);
                         String zipStr = matcher.group(4);
-                        int zip = Integer.valueOf(zipStr);
+                        int zip = Integer.parseInt(zipStr);
                         String town = matcher.group(5);
                         return new PlateOwner(ownerName, street, "", zip, town);
                     }
@@ -327,7 +327,7 @@ public class ViacarAutoIndexProvider extends CaptchaAutoIndexProvider {
 
 
     private HttpGet makeResultRequest() {
-        resultRequest = new HttpGet(resultUri);
+        resultRequest = new HttpGet(RESULT_URI);
         for (Header header : getHttpHeaders("https://www.viacar.ch/eindex/Search.aspx?kanton=" + cantonAbbr)) {
             resultRequest.setHeader(header);
         }

@@ -40,13 +40,14 @@ public class WebServiceBasedCaptchaHandler implements CaptchaHandler {
                                      CaptchaAutoIndexProvider captchaAutoIndexProvider) throws CaptchaException {
         String s = null;
         File captchaImageFile = null;
+        FileOutputStream fos = null;
         try {
             LOGGER.debug("Downloading image...");
             BasicHttpRequest httpRequest = new BasicHttpRequest("GET", captchaImageUrl, HttpVersion.HTTP_1_1);
             httpRequest.setHeader("host", httpHostHeaderValue);
             HttpResponse httpResponse = httpClient.execute(httpHost, httpRequest, httpContext);
             captchaImageFile = File.createTempFile("captcha", ".jpg");
-            FileOutputStream fos = new FileOutputStream(captchaImageFile);
+            fos = new FileOutputStream(captchaImageFile);
             httpResponse.getEntity().writeTo(fos);
             fos.close();
             //httpResponse.getEntity().getContent().close();
@@ -65,8 +66,15 @@ public class WebServiceBasedCaptchaHandler implements CaptchaHandler {
                 throw new CaptchaException(e);
             }
         } finally {
+            if(fos != null) try {
+                fos.close();
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
             if (captchaImageFile != null) {
-                captchaImageFile.delete();
+                if(!captchaImageFile.delete()) {
+                    System.err.println("Could not delete " + captchaImageFile.getAbsolutePath());
+                }
             }
         }
         return s;
