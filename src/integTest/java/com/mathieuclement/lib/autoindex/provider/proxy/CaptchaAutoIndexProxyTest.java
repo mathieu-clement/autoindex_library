@@ -4,13 +4,11 @@ import com.mathieuclement.lib.autoindex.canton.Canton;
 import com.mathieuclement.lib.autoindex.plate.Plate;
 import com.mathieuclement.lib.autoindex.plate.PlateOwner;
 import com.mathieuclement.lib.autoindex.plate.PlateType;
-import com.mathieuclement.lib.autoindex.provider.cari.sync.FribourgAutoIndexProvider;
 import com.mathieuclement.lib.autoindex.provider.common.AutoIndexProvider;
 import com.mathieuclement.lib.autoindex.provider.common.captcha.CaptchaAutoIndexProvider;
-import com.mathieuclement.lib.autoindex.provider.common.captcha.CaptchaException;
 import com.mathieuclement.lib.autoindex.provider.common.captcha.CaptchaHandler;
-import com.mathieuclement.lib.autoindex.provider.exception.*;
-import com.mathieuclement.lib.autoindex.provider.utils.WebServiceBasedCaptchaHandler;
+import com.mathieuclement.lib.autoindex.provider.utils.MockupAutoIndexProvider;
+import com.mathieuclement.lib.autoindex.provider.utils.MockupCaptchaHandler;
 import org.junit.Test;
 
 import static org.junit.Assert.assertEquals;

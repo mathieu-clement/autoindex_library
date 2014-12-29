@@ -21,7 +21,7 @@ import java.util.regex.Pattern;
 public abstract class AsyncGermanCariAutoIndexProvider extends AsyncCariAutoIndexProvider {
     private String htmlPage;
     private CaptchaException captchaException = new CaptchaException("Invalid captcha code");
-    private static final Pattern plateOwnerPattern = Pattern.compile("<td class='libelle'>(.+)\\s*</td>\\s+<td( nowrap)?>\\s*(.+)\\s*</td>");
+    private static final Pattern PLATE_OWNER_PATTERN = Pattern.compile("<td class='libelle'>(.+)\\s*</td>\\s+<td( nowrap)?>\\s*(.+)\\s*</td>");
 
     protected PlateOwner htmlToPlateOwner(HttpResponse response, Plate plate) throws IOException, PlateOwnerDataException,
             CaptchaException, ProviderException, PlateOwnerNotFoundException, PlateOwnerHiddenException {
@@ -66,7 +66,7 @@ public abstract class AsyncGermanCariAutoIndexProvider extends AsyncCariAutoInde
 
         // TODO I noticed in Valais, you can get the message "Plaque disponible". Maybe we can do something with that message.
 
-        Matcher matcher = plateOwnerPattern.matcher(htmlPage);
+        Matcher matcher = PLATE_OWNER_PATTERN.matcher(htmlPage);
 
         while (matcher.find()) {
             if (matcher.group(0).contains("checkField") || matcher.group(0).contains("Captcha Code generation error")) {

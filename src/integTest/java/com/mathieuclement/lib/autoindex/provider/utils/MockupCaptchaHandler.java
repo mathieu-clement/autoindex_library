@@ -1,4 +1,4 @@
-package com.mathieuclement.lib.autoindex.provider.proxy;
+package com.mathieuclement.lib.autoindex.provider.utils;
 
 import com.mathieuclement.lib.autoindex.provider.common.captcha.CaptchaAutoIndexProvider;
 import com.mathieuclement.lib.autoindex.provider.common.captcha.CaptchaException;

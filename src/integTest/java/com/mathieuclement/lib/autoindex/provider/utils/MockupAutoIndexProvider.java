@@ -1,4 +1,4 @@
-package com.mathieuclement.lib.autoindex.provider.proxy;
+package com.mathieuclement.lib.autoindex.provider.utils;
 
 import com.mathieuclement.lib.autoindex.plate.Plate;
 import com.mathieuclement.lib.autoindex.plate.PlateOwner;
@@ -6,14 +6,18 @@ import com.mathieuclement.lib.autoindex.plate.PlateType;
 import com.mathieuclement.lib.autoindex.provider.common.captcha.CaptchaAutoIndexProvider;
 import com.mathieuclement.lib.autoindex.provider.common.captcha.CaptchaException;
 import com.mathieuclement.lib.autoindex.provider.common.captcha.CaptchaHandler;
-import com.mathieuclement.lib.autoindex.provider.exception.*;
+import com.mathieuclement.lib.autoindex.provider.exception.PlateOwnerHiddenException;
+import com.mathieuclement.lib.autoindex.provider.exception.PlateOwnerNotFoundException;
+import com.mathieuclement.lib.autoindex.provider.exception.ProviderException;
+import com.mathieuclement.lib.autoindex.provider.exception.RequestCancelledException;
+import com.mathieuclement.lib.autoindex.provider.exception.UnsupportedPlateException;
 
 /**
 * Created by mathieu on 12/29/14.
 */
-class MockupAutoIndexProvider extends CaptchaAutoIndexProvider {
+public class MockupAutoIndexProvider extends CaptchaAutoIndexProvider {
 
-    protected MockupAutoIndexProvider(CaptchaHandler captchaHandler) {
+    public MockupAutoIndexProvider(CaptchaHandler captchaHandler) {
         super(captchaHandler);
     }
 

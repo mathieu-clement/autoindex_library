@@ -1,9 +1,12 @@
-package com.mathieuclement.lib.autoindex.provider.cari.sync;
+package com.mathieuclement.lib.autoindex.provider.cari;
 
 import com.mathieuclement.lib.autoindex.canton.Canton;
 import com.mathieuclement.lib.autoindex.plate.Plate;
 import com.mathieuclement.lib.autoindex.plate.PlateOwner;
 import com.mathieuclement.lib.autoindex.plate.PlateType;
+import com.mathieuclement.lib.autoindex.provider.cari.sync.CariAutoIndexProvider;
+import com.mathieuclement.lib.autoindex.provider.cari.sync.FribourgAutoIndexProvider;
+import com.mathieuclement.lib.autoindex.provider.cari.sync.ValaisAutoIndexProvider;
 import com.mathieuclement.lib.autoindex.provider.common.captcha.CaptchaHandler;
 import com.mathieuclement.lib.autoindex.provider.exception.PlateOwnerNotFoundException;
 import com.mathieuclement.lib.autoindex.provider.utils.WebServiceBasedCaptchaHandler;

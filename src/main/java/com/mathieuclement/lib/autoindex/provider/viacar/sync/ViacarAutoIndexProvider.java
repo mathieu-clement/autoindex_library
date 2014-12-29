@@ -6,8 +6,18 @@ import com.mathieuclement.lib.autoindex.plate.PlateType;
 import com.mathieuclement.lib.autoindex.provider.common.captcha.CaptchaAutoIndexProvider;
 import com.mathieuclement.lib.autoindex.provider.common.captcha.CaptchaException;
 import com.mathieuclement.lib.autoindex.provider.common.captcha.CaptchaHandler;
-import com.mathieuclement.lib.autoindex.provider.exception.*;
-import org.apache.http.*;
+import com.mathieuclement.lib.autoindex.provider.exception.NumberOfRequestsExceededException;
+import com.mathieuclement.lib.autoindex.provider.exception.PlateOwnerHiddenException;
+import com.mathieuclement.lib.autoindex.provider.exception.PlateOwnerNotFoundException;
+import com.mathieuclement.lib.autoindex.provider.exception.ProviderException;
+import com.mathieuclement.lib.autoindex.provider.exception.RequestCancelledException;
+import com.mathieuclement.lib.autoindex.provider.exception.UnsupportedPlateException;
+import org.apache.http.Header;
+import org.apache.http.HttpHost;
+import org.apache.http.HttpResponse;
+import org.apache.http.HttpVersion;
+import org.apache.http.NameValuePair;
+import org.apache.http.StatusLine;
 import org.apache.http.client.CookieStore;
 import org.apache.http.client.HttpClient;
 import org.apache.http.client.entity.UrlEncodedFormEntity;
@@ -35,7 +45,14 @@ import org.slf4j.LoggerFactory;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.UnsupportedEncodingException;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.LinkedHashSet;
+import java.util.LinkedList;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -222,6 +239,7 @@ public class ViacarAutoIndexProvider extends CaptchaAutoIndexProvider {
         try {
             captchaResponse.getEntity().getContent().close();
         } catch (Throwable t) {
+            t.printStackTrace();
             // ignore
         }
 
@@ -241,6 +259,7 @@ public class ViacarAutoIndexProvider extends CaptchaAutoIndexProvider {
         try {
             searchResponse.getEntity().getContent().close();
         } catch (Throwable t) {
+            t.printStackTrace();
             // ignore
         }
 
@@ -319,9 +338,7 @@ public class ViacarAutoIndexProvider extends CaptchaAutoIndexProvider {
         searchFormParams = makeFormParams(captchaResponse.getEntity().getContent(),
                 "utf-8", getLoginUrl());
 
-        try {
 //            captchaResponse.getEntity().getContent().close();
-        } catch (Throwable t) { /* ignore */ }
 
         // Remove param with name "TextBoxKontrollschild" if it exists
         if (searchFormParams.isEmpty()) {

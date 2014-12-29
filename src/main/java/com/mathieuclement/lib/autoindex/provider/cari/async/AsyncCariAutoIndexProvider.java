@@ -7,10 +7,20 @@ import com.mathieuclement.lib.autoindex.plate.PlateType;
 import com.mathieuclement.lib.autoindex.provider.common.MyHttpClient;
 import com.mathieuclement.lib.autoindex.provider.common.captcha.CaptchaException;
 import com.mathieuclement.lib.autoindex.provider.common.captcha.event.AsyncAutoIndexProvider;
-import com.mathieuclement.lib.autoindex.provider.exception.*;
+import com.mathieuclement.lib.autoindex.provider.exception.IgnoreMeException;
+import com.mathieuclement.lib.autoindex.provider.exception.PlateOwnerHiddenException;
+import com.mathieuclement.lib.autoindex.provider.exception.PlateOwnerNotFoundException;
+import com.mathieuclement.lib.autoindex.provider.exception.ProviderException;
+import com.mathieuclement.lib.autoindex.provider.exception.UnsupportedPlateException;
 import com.mathieuclement.lib.autoindex.provider.utils.ResponseUtils;
 import org.apache.commons.lang3.StringEscapeUtils;
-import org.apache.http.*;
+import org.apache.http.Header;
+import org.apache.http.HttpHost;
+import org.apache.http.HttpRequest;
+import org.apache.http.HttpResponse;
+import org.apache.http.HttpVersion;
+import org.apache.http.NameValuePair;
+import org.apache.http.StatusLine;
 import org.apache.http.client.CookieStore;
 import org.apache.http.client.HttpClient;
 import org.apache.http.client.entity.UrlEncodedFormEntity;
@@ -32,7 +42,12 @@ import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.UnsupportedEncodingException;
 import java.security.Security;
-import java.util.*;
+import java.util.LinkedHashMap;
+import java.util.LinkedHashSet;
+import java.util.LinkedList;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -270,7 +285,7 @@ public abstract class AsyncCariAutoIndexProvider extends AsyncAutoIndexProvider 
 
     protected abstract String getCariHttpHostname();
 
-    private static final Pattern plateOwnerPattern = Pattern.compile("<td class='libelle'>(.+)\\s*</td>\\s+<td( nowrap)?>\\s*(.+)\\s*</td>");
+    private static final Pattern PLATE_OWNER_PATTERN = Pattern.compile("<td class='libelle'>(.+)\\s*</td>\\s+<td( nowrap)?>\\s*(.+)\\s*</td>");
 
     protected PlateOwner htmlToPlateOwner(HttpResponse response, Plate plate) throws IOException, PlateOwnerDataException,
             CaptchaException, ProviderException, PlateOwnerNotFoundException, PlateOwnerHiddenException, IgnoreMeException {
@@ -317,7 +332,7 @@ public abstract class AsyncCariAutoIndexProvider extends AsyncAutoIndexProvider 
 
         // TODO I noticed in Valais, you can get the message "Plaque disponible". Maybe we can do something with that message.
 
-        Matcher matcher = plateOwnerPattern.matcher(htmlPage);
+        Matcher matcher = PLATE_OWNER_PATTERN.matcher(htmlPage);
 
         while (matcher.find()) {
             if (matcher.group(0).contains("checkField") || matcher.group(0).contains("Captcha Code generation error")) {

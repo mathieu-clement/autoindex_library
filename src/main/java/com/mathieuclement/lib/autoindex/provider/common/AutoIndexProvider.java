@@ -4,7 +4,11 @@ import com.mathieuclement.lib.autoindex.plate.Plate;
 import com.mathieuclement.lib.autoindex.plate.PlateOwner;
 import com.mathieuclement.lib.autoindex.plate.PlateType;
 import com.mathieuclement.lib.autoindex.provider.common.captcha.CaptchaException;
-import com.mathieuclement.lib.autoindex.provider.exception.*;
+import com.mathieuclement.lib.autoindex.provider.exception.PlateOwnerHiddenException;
+import com.mathieuclement.lib.autoindex.provider.exception.PlateOwnerNotFoundException;
+import com.mathieuclement.lib.autoindex.provider.exception.ProviderException;
+import com.mathieuclement.lib.autoindex.provider.exception.RequestCancelledException;
+import com.mathieuclement.lib.autoindex.provider.exception.UnsupportedPlateException;
 
 /**
  * Provider of data about owners of number plates
