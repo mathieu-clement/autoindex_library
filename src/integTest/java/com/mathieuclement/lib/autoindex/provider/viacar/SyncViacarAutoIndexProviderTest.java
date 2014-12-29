@@ -15,6 +15,9 @@ import org.junit.Test;
 
 import java.util.Random;
 
+/**
+ * Test for SyncViacarAutoIndexProvider.
+ */
 public class SyncViacarAutoIndexProviderTest {
     private ViacarAutoIndexProvider provider;
     private Canton canton;
@@ -40,8 +43,8 @@ public class SyncViacarAutoIndexProviderTest {
 
     @Test
     @SuppressFBWarnings(
-            value="DMI_RANDOM_USED_ONLY_ONCE",
-            justification="This is just a test.")
+            value = "DMI_RANDOM_USED_ONLY_ONCE",
+            justification = "This is just a test.")
     public void testAg() throws Exception {
         PlateOwner expected = new PlateOwner("Müller Verena", "Hofstrasse 49", "", 5406, "Rütihof");
         PlateOwner actual = provider.getPlateOwner(new Plate(32413, PlateType.AUTOMOBILE, canton),

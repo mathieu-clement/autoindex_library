@@ -13,7 +13,7 @@ import com.mathieuclement.lib.autoindex.provider.exception.RequestCancelledExcep
 import com.mathieuclement.lib.autoindex.provider.exception.UnsupportedPlateException;
 
 /**
-* Created by mathieu on 12/29/14.
+* Mockup for auto index provider.
 */
 public class MockupAutoIndexProvider extends CaptchaAutoIndexProvider {
 
@@ -32,7 +32,9 @@ public class MockupAutoIndexProvider extends CaptchaAutoIndexProvider {
     }
 
     @Override
-    public PlateOwner getPlateOwner(Plate plate, int requestId) throws ProviderException, PlateOwnerNotFoundException, PlateOwnerHiddenException, UnsupportedPlateException, CaptchaException, RequestCancelledException {
+    public PlateOwner getPlateOwner(Plate plate, int requestId) throws ProviderException,
+            PlateOwnerNotFoundException, PlateOwnerHiddenException,
+            UnsupportedPlateException, CaptchaException, RequestCancelledException {
         throw new AssertionError("Proxy mustn't have called the real provider");
     }
 

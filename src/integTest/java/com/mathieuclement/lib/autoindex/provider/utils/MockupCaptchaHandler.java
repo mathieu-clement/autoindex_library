@@ -8,11 +8,14 @@ import org.apache.http.client.HttpClient;
 import org.apache.http.protocol.HttpContext;
 
 /**
- * Created by mathieu on 12/29/14.
+ * Mockup for captcha handler.
  */
 public class MockupCaptchaHandler implements CaptchaHandler {
     @Override
-    public String handleCaptchaImage(int requestId, String captchaImageUrl, HttpClient httpClient, HttpHost httpHost, HttpContext httpContext, String httpHostHeaderValue, CaptchaAutoIndexProvider captchaAutoIndexProvider) throws CaptchaException {
+    public String handleCaptchaImage(int requestId,
+                                     String captchaImageUrl, HttpClient httpClient, HttpHost httpHost,
+                                     HttpContext httpContext, String httpHostHeaderValue,
+                                     CaptchaAutoIndexProvider captchaAutoIndexProvider) throws CaptchaException {
         return "";
     }
 

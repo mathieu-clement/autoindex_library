@@ -6,6 +6,9 @@ import org.apache.http.HttpResponse;
 
 import java.io.IOException;
 
+/**
+ * Utilities to transform HttpResponse.
+ */
 public class ResponseUtils {
     public static String toString(HttpResponse httpResponse) throws IOException {
         // Use default encoding if none is returned
@@ -23,14 +26,15 @@ public class ResponseUtils {
     }
 
     /**
-     * Replace 2 or more spaces with only one + strip first and last space if any
+     * Replaces two or more spaces with only one + strip first and last space if any.
      *
      * @param str a String possibly containing useless spaces
      * @return the string with multiple spaces replaced by only one, and with beginning and ending space(s) removed.
      */
     public static String removeUselessSpaces(String str) {
         // Recipe contains other interesting things (remove spaces only in the middle for instance)
-        // http://stackoverflow.com/questions/2932392/java-how-to-replace-2-or-more-spaces-with-single-space-in-string-and-delete-lead
+        // http://stackoverflow.com/questions/2932392/java-how-to-replace-2-or-more-spaces-with-single-space-in-string-
+        // and-delete-lead
         return str.trim().replaceAll(" +", " ");
     }
 }

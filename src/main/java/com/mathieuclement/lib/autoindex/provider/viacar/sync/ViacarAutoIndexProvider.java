@@ -66,9 +66,9 @@ public class ViacarAutoIndexProvider extends CaptchaAutoIndexProvider {
     private static final Logger LOGGER = LoggerFactory.getLogger("autoindex.ViacarAutoIndexProvider");
 
     private static final String THIS_IS_THE_CAPTCHA = "THIS_IS_THE_CAPTCHA";
-    private final static String RESULT_URI = "https://www.viacar.ch/eindex/Result.aspx?Var=1";
+    private static final String RESULT_URI = "https://www.viacar.ch/eindex/Result.aspx?Var=1";
     private final HttpHost httpHost = new HttpHost("www.viacar.ch", 443, "https");
-    private final static int PROGRESS_STEPS = 4;
+    private static final int PROGRESS_STEPS = 4;
     private String cantonAbbr;
     private static Set<PlateType> supportedPlateTypes = new LinkedHashSet<PlateType>();
 
@@ -193,7 +193,9 @@ public class ViacarAutoIndexProvider extends CaptchaAutoIndexProvider {
         return cancelledRequests.contains(requestId);
     }
 
-    protected PlateOwner doRequestAfterCaptchaEntered(String captchaCode, Plate plate, HttpClient httpClient, HttpContext httpContext) throws ProviderException, CaptchaException, IOException, PlateOwnerNotFoundException {
+    protected PlateOwner doRequestAfterCaptchaEntered(String captchaCode, Plate plate,
+                                                      HttpClient httpClient, HttpContext httpContext)
+            throws ProviderException, CaptchaException, IOException, PlateOwnerNotFoundException {
         // Send captcha
         try {
             captchaRequest = makeCaptchaRequest(captchaCode);
@@ -274,7 +276,8 @@ public class ViacarAutoIndexProvider extends CaptchaAutoIndexProvider {
         return plateOwner;
     }
 
-    private PlateOwner htmlToPlateOwner(HttpResponse resultResponse, String baseUri, Plate plate) throws IOException, PlateOwnerNotFoundException {
+    private PlateOwner htmlToPlateOwner(HttpResponse resultResponse, String baseUri, Plate plate)
+            throws IOException, PlateOwnerNotFoundException {
         Document doc = Jsoup.parse(resultResponse.getEntity().getContent(),
                 "utf-8", baseUri);
         html = doc.normalise().outerHtml();
@@ -283,7 +286,8 @@ public class ViacarAutoIndexProvider extends CaptchaAutoIndexProvider {
 
         /*
         Typical results
-        Art: Motorrad Name: Schenkel-Albrecht Marcella Ursulina Strasse: Goldschmiedstrasse 10 Ort: 8102 Oberengstringen
+        Art: Motorrad Name: Schenkel-Albrecht Marcella Ursulina
+        Strasse: Goldschmiedstrasse 10 Ort: 8102 Oberengstringen
         Art: Motorwagen Name: Rentra AG Strasse: Kronenweg 4 Ort: 8712 Stäfa
          */
         Pattern pattern = Pattern.compile("Art: (.*) Name: (.*) Strasse: (.*) Ort: (\\d+) (.*)");
@@ -312,8 +316,7 @@ public class ViacarAutoIndexProvider extends CaptchaAutoIndexProvider {
 
 
     private boolean artMatches(String art, PlateType type) {
-        if (art == null) return false;
-        return plateTypeMapping.containsKey(art) && plateTypeMapping.get(art).equals(type);
+        return art != null && plateTypeMapping.containsKey(art) && plateTypeMapping.get(art).equals(type);
     }
 
     private static Map<String, PlateType> plateTypeMapping = new HashMap<String, PlateType>();
@@ -426,7 +429,8 @@ public class ViacarAutoIndexProvider extends CaptchaAutoIndexProvider {
         return "";
     }
 
-    private List<NameValuePair> makeFormParams(InputStream content, String encoding, String pageUri) throws IOException {
+    private List<NameValuePair> makeFormParams(InputStream content, String encoding, String pageUri)
+            throws IOException {
         List<NameValuePair> list = new LinkedList<NameValuePair>();
 
         // Look for "<input>" tags

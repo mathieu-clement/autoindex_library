@@ -6,10 +6,12 @@ import java.net.URLEncoder;
 import java.util.LinkedHashMap;
 import java.util.Map;
 
-// Android doesn't support URIBuilder yet, so....
+/**
+ * Replacement for URIBuilder (unavailable on Android).
+ */
 public class URIBuilder {
     private String baseUri;
-    private final static String ENCODING = "UTF-8";
+    private static final String ENCODING = "UTF-8";
 
     private Map<String, String> queryParams = new LinkedHashMap<>();
 
@@ -28,7 +30,7 @@ public class URIBuilder {
     }
 
     public URI build() {
-        StringBuilder sb = new StringBuilder(queryParams.size()*30+baseUri.length());
+        StringBuilder sb = new StringBuilder(queryParams.size() * 30 + baseUri.length());
         sb.append(baseUri);
         sb.append('?');
         for (Map.Entry<String, String> entry : queryParams.entrySet()) {

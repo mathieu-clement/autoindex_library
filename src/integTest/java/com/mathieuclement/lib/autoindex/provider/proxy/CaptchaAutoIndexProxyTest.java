@@ -13,6 +13,9 @@ import org.junit.Test;
 
 import static org.junit.Assert.assertEquals;
 
+/**
+ * Test for captcha auto index proxy.
+ */
 public class CaptchaAutoIndexProxyTest {
 
     @Test
