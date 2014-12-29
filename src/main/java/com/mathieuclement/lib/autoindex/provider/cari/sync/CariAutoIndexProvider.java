@@ -23,7 +23,6 @@ import com.mathieuclement.lib.autoindex.provider.exception.RequestCancelledExcep
 import com.mathieuclement.lib.autoindex.provider.exception.UnsupportedPlateException;
 import com.mathieuclement.lib.autoindex.provider.utils.ResponseUtils;
 import org.apache.commons.lang3.StringEscapeUtils;
-import org.apache.http.Header;
 import org.apache.http.HttpHost;
 import org.apache.http.HttpRequest;
 import org.apache.http.HttpResponse;
@@ -45,10 +44,8 @@ import org.apache.http.params.CoreProtocolPNames;
 import org.apache.http.params.HttpParams;
 import org.apache.http.protocol.BasicHttpContext;
 import org.apache.http.protocol.HttpContext;
-
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-
 
 import java.io.IOException;
 import java.io.UnsupportedEncodingException;
@@ -119,36 +116,20 @@ public abstract class CariAutoIndexProvider
 
         fireProgress(0, PROGRESS_STEPS);
 
-        // Headers
-        Header urlEncodedContentTypeHeader = new BasicHeader("Content-Type", "application/x-www-form-urlencoded");
-        Header charsetHeader = new BasicHeader("Accept-Charset", "utf-8");
-        Header languageHeader = new BasicHeader("Accept-Language", "fr");
-        Header encodingHeader = new BasicHeader("Accept-Encoding", "gzip,deflate,sdch");
-        Header connectionHeader = new BasicHeader("Connection", "keep-alive");
-        // TODO Cannot keep that. Use our own User-Agent or something related to Apache HttpClient...
-        Header userAgentHeader = new BasicHeader("User-Agent",
-                "Mozilla/5.0 (Windows NT 6.2; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) " +
-                        "Chrome/32.0.1667.0 Safari/537.36");
         String lookupOwnerPageName = "rechDet";
-        Header referrerHeader = new BasicHeader("Referer", getCariOnlineFullUrl() + lookupOwnerPageName); // spelling
-        // error on purpose as in the RFC
-        Header originHeader = new BasicHeader("Origin", getCariHttpHost().getSchemeName() + "://" +
-                getCariHttpHostname());
-        Header hostHeader = new BasicHeader("Host", getCariHttpHostname());
+        BasicHeader hostHeader = new BasicHeader("Host", getCariHttpHostname());
 
         // HTTP handling
         HttpContext httpContext = new BasicHttpContext();
         HttpParams httpParams = new BasicHttpParams();
         httpParams.setParameter(CoreProtocolPNames.PROTOCOL_VERSION, HttpVersion.HTTP_1_1);
-        //httpParams.setParameter(ClientPNames.COOKIE_POLICY, CookiePolicy.RFC_2965);
         HttpClient httpClient = new DefaultHttpClient(httpParams);
         // use our own cookie store
         CookieStore cookieStore = new BasicCookieStore();
         httpContext.setAttribute(ClientContext.COOKIE_STORE, cookieStore);
 
         // Load page a first time and get that session cookie!
-        HttpRequest dummyPageViewRequest = new BasicHttpRequest("GET", getCariOnlineFullUrl() + lookupOwnerPageName,
-                HttpVersion.HTTP_1_1);
+        HttpRequest dummyPageViewRequest = new BasicHttpRequest("GET", getCariOnlineFullUrl() + lookupOwnerPageName);
         dummyPageViewRequest.setHeader(hostHeader);
         try {
             HttpResponse dummyResponse = httpClient.execute(getCariHttpHost(), dummyPageViewRequest, httpContext);
@@ -170,59 +151,21 @@ public abstract class CariAutoIndexProvider
 
         fireProgress(2, PROGRESS_STEPS);
 
-        // TODO Doesn't have Cari a TimeOut for the captcha or something like this? Connection can be closed
-        // after some time.
-        // We have to get that time from the server. Then in the GUI, we show a count down, so the user can see
-        // how much time is left to enter the code.
-        // After the time is over, up to a maximal number of times, the code is generated again and refreshed
-        // on the screen.
-
-        // TODO Set referer
-        // TODO Set User-Agent header to the most used browser (probably the last available version of
-        // Internet Explorer)
         BasicHttpEntityEnclosingRequest plateOwnerSearchRequest = new BasicHttpEntityEnclosingRequest(
-                "POST", getCariOnlineFullUrl() + lookupOwnerPageName, HttpVersion.HTTP_1_1);
+                "POST", getCariOnlineFullUrl() + lookupOwnerPageName);
         plateOwnerSearchRequest.addHeader(hostHeader);
-        plateOwnerSearchRequest.addHeader(urlEncodedContentTypeHeader);
-        plateOwnerSearchRequest.addHeader(charsetHeader);
-        plateOwnerSearchRequest.addHeader(languageHeader);
-        plateOwnerSearchRequest.addHeader(encodingHeader);
-        plateOwnerSearchRequest.addHeader(connectionHeader);
-        plateOwnerSearchRequest.addHeader(userAgentHeader);
-        plateOwnerSearchRequest.addHeader(referrerHeader);
-        plateOwnerSearchRequest.addHeader(originHeader);
-
-        List<NameValuePair> postParams = new LinkedList<NameValuePair>();
-        postParams.add(new BasicNameValuePair("no", String.valueOf(plate.getNumber())));
+        addCommonHeaders(plateOwnerSearchRequest);
+        // "Referer": spelling error on purpose as in the RFC);
+        plateOwnerSearchRequest.addHeader(new BasicHeader("Referer", getCariOnlineFullUrl() + lookupOwnerPageName));
+        plateOwnerSearchRequest.addHeader(new BasicHeader("Origin", getCariHttpHost().getSchemeName() + "://" +
+                getCariHttpHostname()));
 
         if (!plateTypeMapping.containsKey(plate.getType())) {
             throw new UnsupportedPlateException("Plate type " + plate.getType() +
                     " is not supported by the Cari provider yet.", plate);
         }
-        postParams.add(new BasicNameValuePair("cat", String.valueOf(plateTypeMapping.get(plate.getType()))));
 
-        // Set sous-catégorie to "Normale" (auto / moto / agricultural / industrial)
-        int sousCat = 1;
-        if (PlateType.AUTOMOBILE_TEMPORARY.equals(plate.getType())) {
-            sousCat = 2;
-        } else if (PlateType.MOTORCYCLE_TEMPORARY.equals(plate.getType())) {
-            sousCat = 2;
-        } else if (PlateType.AUTOMOBILE_REPAIR_SHOP.equals(plate.getType())) {
-            sousCat = 3;
-        } else if (PlateType.MOTORCYCLE_REPAIR_SHOP.equals(plate.getType())) {
-            sousCat = 3;
-        } else if (PlateType.MOPED.equals(plate.getType())) {
-            sousCat = 21;
-        }
-        postParams.add(new BasicNameValuePair("sousCat", String.valueOf(sousCat)));
-
-        postParams.add(new BasicNameValuePair("captchaVal", captchaValue));
-
-        // hidden parameters
-        postParams.add(new BasicNameValuePair("action", "query"));
-        postParams.add(new BasicNameValuePair("pageContext", "login"));
-        postParams.add(new BasicNameValuePair("valider", "Continuer"));
-        postParams.add(new BasicNameValuePair("effacer", "Effacer"));
+        List<NameValuePair> postParams = makePostParams(plate, captchaValue);
 
         try {
             plateOwnerSearchRequest.setEntity(new UrlEncodedFormEntity(postParams));
@@ -247,7 +190,6 @@ public abstract class CariAutoIndexProvider
             httpClient.getConnectionManager().shutdown();
 
             return plateOwner;
-
         } catch (IOException e) {
             throw new ProviderException("Could not perform plate owner request on plate " + plate, e, plate);
         } catch (PlateOwnerDataException e) {
@@ -261,6 +203,47 @@ public abstract class CariAutoIndexProvider
         } catch (IgnoreMeException e) {
             throw new ProviderException("Strange error on plate " + plate + ", went back to welcome page. ", e, plate);
         }
+    }
+
+    private List<NameValuePair> makePostParams(Plate plate, String captchaValue) {
+        List<NameValuePair> postParams = new LinkedList<NameValuePair>();
+        postParams.add(new BasicNameValuePair("no", String.valueOf(plate.getNumber())));
+        postParams.add(new BasicNameValuePair("cat", String.valueOf(plateTypeMapping.get(plate.getType()))));
+        postParams.add(new BasicNameValuePair("sousCat", String.valueOf(toSousCat(plate))));
+        postParams.add(new BasicNameValuePair("captchaVal", captchaValue));
+        // hidden parameters
+        postParams.add(new BasicNameValuePair("action", "query"));
+        postParams.add(new BasicNameValuePair("pageContext", "login"));
+        postParams.add(new BasicNameValuePair("valider", "Continuer"));
+        postParams.add(new BasicNameValuePair("effacer", "Effacer"));
+        return postParams;
+    }
+
+    private int toSousCat(Plate plate) {
+        int sousCat = 1;
+        if (PlateType.AUTOMOBILE_TEMPORARY.equals(plate.getType())) {
+            sousCat = 2;
+        } else if (PlateType.MOTORCYCLE_TEMPORARY.equals(plate.getType())) {
+            sousCat = 2;
+        } else if (PlateType.AUTOMOBILE_REPAIR_SHOP.equals(plate.getType())) {
+            sousCat = 3;
+        } else if (PlateType.MOTORCYCLE_REPAIR_SHOP.equals(plate.getType())) {
+            sousCat = 3;
+        } else if (PlateType.MOPED.equals(plate.getType())) {
+            sousCat = 21;
+        }
+        return sousCat;
+    }
+
+    private void addCommonHeaders(BasicHttpEntityEnclosingRequest plateOwnerSearchRequest) {
+        plateOwnerSearchRequest.addHeader(new BasicHeader("Content-Type", "application/x-www-form-urlencoded"));
+        plateOwnerSearchRequest.addHeader(new BasicHeader("Accept-Charset", "utf-8"));
+        plateOwnerSearchRequest.addHeader(new BasicHeader("Accept-Language", "fr"));
+        plateOwnerSearchRequest.addHeader(new BasicHeader("Accept-Encoding", "gzip,deflate,sdch"));
+        plateOwnerSearchRequest.addHeader(new BasicHeader("Connection", "keep-alive"));
+        plateOwnerSearchRequest.addHeader(new BasicHeader("User-Agent",
+                "Mozilla/5.0 (Windows NT 6.2; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) " +
+                        "Chrome/32.0.1667.0 Safari/537.36"));
     }
 
     protected abstract HttpHost getCariHttpHost();
