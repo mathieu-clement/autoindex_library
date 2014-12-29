@@ -9,4 +9,8 @@
         <module name="ConstantName"/>
         <module name="EmptyBlock"/>
     </module>
+    <module name="FileTabCharacter">
+    <!-- Checks that there are no tab characters in the file.
+    -->
+    </module>
 </module>
