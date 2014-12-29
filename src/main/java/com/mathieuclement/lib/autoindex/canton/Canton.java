@@ -81,8 +81,8 @@ public class Canton {
     public boolean equals(Object obj) {
         if (obj instanceof Canton) {
             Canton otherCanton = (Canton) obj;
-            return (otherCanton.abbreviation != null && this.abbreviation != null && otherCanton.abbreviation
-                    .equalsIgnoreCase(this.abbreviation));
+            return otherCanton.abbreviation != null && this.abbreviation != null && otherCanton.abbreviation
+                    .equalsIgnoreCase(this.abbreviation);
         }
         return false;
     }
