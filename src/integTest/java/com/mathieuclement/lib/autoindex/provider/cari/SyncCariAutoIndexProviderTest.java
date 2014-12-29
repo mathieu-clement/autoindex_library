@@ -18,7 +18,7 @@ import org.junit.Test;
 import java.util.Random;
 
 /**
- * Test for cari auto index provider
+ * Test for cari auto index provider.
  */
 public class SyncCariAutoIndexProviderTest {
     private CariAutoIndexProvider fribourgAutoIndexProvider;
