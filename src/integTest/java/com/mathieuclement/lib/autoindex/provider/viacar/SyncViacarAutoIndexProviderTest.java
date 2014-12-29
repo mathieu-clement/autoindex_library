@@ -7,6 +7,7 @@ import com.mathieuclement.lib.autoindex.plate.PlateType;
 import com.mathieuclement.lib.autoindex.provider.common.captcha.CaptchaHandler;
 import com.mathieuclement.lib.autoindex.provider.utils.WebServiceBasedCaptchaHandler;
 import com.mathieuclement.lib.autoindex.provider.viacar.sync.ViacarAutoIndexProvider;
+import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;
@@ -38,6 +39,9 @@ public class SyncViacarAutoIndexProviderTest {
     }
 
     @Test
+    @SuppressFBWarnings(
+            value="DMI_RANDOM_USED_ONLY_ONCE",
+            justification="This is just a test.")
     public void testAg() throws Exception {
         PlateOwner expected = new PlateOwner("Müller Verena", "Hofstrasse 49", "", 5406, "Rütihof");
         PlateOwner actual = provider.getPlateOwner(new Plate(32413, PlateType.AUTOMOBILE, canton),
