@@ -19,6 +19,13 @@ sourceSets {
     }
 }
 
+task integTest(type: Test) {
+    testClassesDir = sourceSets.integTest.output.classesDir
+    classpath = sourceSets.integTest.runtimeClasspath
+}
+
+check.dependsOn integTest
+
 dependencies {
     // TODO: Check dependencies are not packaged in JAR
     compile 'org.apache.httpcomponents:httpcore:4.3.2'
