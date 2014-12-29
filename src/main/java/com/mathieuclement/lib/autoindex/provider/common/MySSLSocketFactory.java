@@ -16,14 +16,13 @@ import java.security.cert.CertificateException;
 import java.security.cert.X509Certificate;
 
 /**
- * Author: Mathieu Clément
- * Date: 19.04.2013
+ * A factory to create SSL sockets.
  */
-
 public class MySSLSocketFactory extends SSLSocketFactory {
     SSLContext sslContext = SSLContext.getInstance("TLS");
 
-    public MySSLSocketFactory(KeyStore truststore) throws NoSuchAlgorithmException, KeyManagementException, KeyStoreException, UnrecoverableKeyException {
+    public MySSLSocketFactory(KeyStore truststore) throws NoSuchAlgorithmException, KeyManagementException,
+            KeyStoreException, UnrecoverableKeyException {
         super(truststore);
 
         TrustManager tm = new X509TrustManager() {
@@ -41,7 +40,8 @@ public class MySSLSocketFactory extends SSLSocketFactory {
         sslContext.init(null, new TrustManager[] { tm }, null);
     }
 
-    public MySSLSocketFactory(SSLContext context) throws KeyManagementException, NoSuchAlgorithmException, KeyStoreException, UnrecoverableKeyException {
+    public MySSLSocketFactory(SSLContext context) throws KeyManagementException, NoSuchAlgorithmException,
+            KeyStoreException, UnrecoverableKeyException {
         super(context);
         sslContext = context;
     }

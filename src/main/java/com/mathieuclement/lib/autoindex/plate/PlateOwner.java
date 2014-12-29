@@ -2,6 +2,9 @@ package com.mathieuclement.lib.autoindex.plate;
 
 import java.util.regex.Pattern;
 
+/**
+ * Owner of a plate.
+ */
 public class PlateOwner {
     protected String name = "";
     protected String address = "";
@@ -32,8 +35,9 @@ public class PlateOwner {
     }
 
     public void checkName() throws PlateOwnerDataException {
-        if (!wordsPattern.matcher(name).matches())
+        if (!wordsPattern.matcher(name).matches()) {
             throw new PlateOwnerDataException("Name '" + name + "' is not valid.", this);
+        }
     }
 
     public String getAddress() {

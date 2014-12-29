@@ -11,6 +11,9 @@ package com.mathieuclement.lib.autoindex.canton;
 import com.mathieuclement.lib.autoindex.provider.common.AutoIndexProvider;
 import com.mathieuclement.lib.autoindex.provider.common.captcha.event.AsyncAutoIndexProvider;
 
+/**
+ * A Swiss canton with an autoindex provider.
+ */
 public class Canton {
     private String abbreviation;
     private boolean isAutoIndexSupported;
@@ -70,7 +73,8 @@ public class Canton {
 
     @Override
     public int hashCode() {
-        return 31 * (abbreviation == null ? 0 : abbreviation.hashCode()) + 2 * (syncAutoIndexProvider == null ? 0 : syncAutoIndexProvider.hashCode());
+        return 31 * (abbreviation == null ? 0 : abbreviation.hashCode()) +
+                2 * (syncAutoIndexProvider == null ? 0 : syncAutoIndexProvider.hashCode());
     }
 
     @Override

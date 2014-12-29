@@ -66,13 +66,15 @@ public class WebServiceBasedCaptchaHandler implements CaptchaHandler {
                 throw new CaptchaException(e);
             }
         } finally {
-            if(fos != null) try {
-                fos.close();
-            } catch (IOException e) {
-                e.printStackTrace();
+            if (fos != null) {
+                try {
+                    fos.close();
+                } catch (IOException e) {
+                    e.printStackTrace();
+                }
             }
             if (captchaImageFile != null) {
-                if(!captchaImageFile.delete()) {
+                if (!captchaImageFile.delete()) {
                     System.err.println("Could not delete " + captchaImageFile.getAbsolutePath());
                 }
             }
@@ -80,7 +82,8 @@ public class WebServiceBasedCaptchaHandler implements CaptchaHandler {
         return s;
     }
 
-    private String solveCaptcha(File file, HttpClient httpClient, AutoIndexProvider autoIndexProvider) throws IOException {
+    private String solveCaptcha(File file, HttpClient httpClient, AutoIndexProvider autoIndexProvider)
+            throws IOException {
         String system = (autoIndexProvider instanceof CariAutoIndexProvider) ? "cari" : "viacar";
 
         HttpPost httpPost = new HttpPost("http://mathieuclement.com:13245/" + system);
@@ -103,8 +106,10 @@ public class WebServiceBasedCaptchaHandler implements CaptchaHandler {
         HttpResponse response = httpClient.execute(httpPost);
         LOGGER.debug("----------------------------------------");
         LOGGER.debug(response.getStatusLine().toString());
-        if (response.getStatusLine().getStatusCode() != 200) throw new RuntimeException("Could not send captcha " +
-                "(server error, code " + response.getStatusLine().getStatusCode() + ")");
+        if (response.getStatusLine().getStatusCode() != 200) {
+            throw new RuntimeException("Could not send captcha " +
+                    "(server error, code " + response.getStatusLine().getStatusCode() + ")");
+        }
         HttpEntity resEntity = response.getEntity();
         return EntityUtils.toString(resEntity);
     }

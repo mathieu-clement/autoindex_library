@@ -13,6 +13,9 @@ import com.mathieuclement.lib.autoindex.provider.common.AutoIndexProvider;
 import java.util.LinkedList;
 import java.util.List;
 
+/**
+ * Factory to create cantons.
+ */
 public class CantonFactory {
     public static Canton create(String abbreviation, AutoIndexProvider autoIndexProvider) {
         return new Canton(abbreviation, autoIndexProvider != null, autoIndexProvider);

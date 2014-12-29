@@ -28,7 +28,8 @@ public final class PlateType {
     public static final PlateType AUTOMOBILE = new PlateType("automobile");
     public static final PlateType AUTOMOBILE_BROWN = new PlateType("automobile_brown");
     public static final PlateType AUTOMOBILE_TEMPORARY = new PlateType("automobile_temporary");
-    public static final PlateType AUTOMOBILE_REPAIR_SHOP = new PlateType("automobile_repair_shop"); // Garage (plate number ends with "U")
+    // Garage (plate number ends with "U")
+    public static final PlateType AUTOMOBILE_REPAIR_SHOP = new PlateType("automobile_repair_shop");
 
     public static final PlateType MOTORCYCLE = new PlateType("motorcycle");
     public static final PlateType MOTORCYCLE_YELLOW = new PlateType("motorcycle_yellow");
@@ -39,20 +40,23 @@ public final class PlateType {
     public static final PlateType MOPED = new PlateType("moped");
     public static final PlateType AGRICULTURAL = new PlateType("agricultural");
     public static final PlateType INDUSTRIAL = new PlateType("industrial");
+
     public String toString() {
         return name;
     }
 
     @Override
     public boolean equals(Object o) {
-        if (this == o) return true;
-        if (o == null || getClass() != o.getClass()) return false;
+        if (this == o) {
+            return true;
+        }
+        if (o == null || getClass() != o.getClass()) {
+            return false;
+        }
 
         PlateType plateType = (PlateType) o;
 
-        if (!name.equals(plateType.name)) return false;
-
-        return true;
+        return name.equals(plateType.name);
     }
 
     @Override

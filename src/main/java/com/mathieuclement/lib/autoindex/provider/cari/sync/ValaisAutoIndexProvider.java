@@ -3,6 +3,9 @@ package com.mathieuclement.lib.autoindex.provider.cari.sync;
 import com.mathieuclement.lib.autoindex.provider.common.captcha.CaptchaHandler;
 import org.apache.http.HttpHost;
 
+/**
+ * AutoIndex provider for Valais.
+ */
 public class ValaisAutoIndexProvider extends CariAutoIndexProvider {
     public ValaisAutoIndexProvider(CaptchaHandler captchaHandler) {
         super(captchaHandler);

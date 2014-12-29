@@ -12,8 +12,7 @@ import java.io.InputStream;
 import java.security.KeyStore;
 
 /**
- * Author: Mathieu Clément
- * Date: 19.04.2013
+ * A custom HTTP client that knows about some SSL certificates.
  */
 public class MyHttpClient extends DefaultHttpClient {
 

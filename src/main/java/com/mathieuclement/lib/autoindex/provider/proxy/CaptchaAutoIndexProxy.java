@@ -48,7 +48,9 @@ public class CaptchaAutoIndexProxy extends CaptchaAutoIndexProvider {
     }
 
     @Override
-    public PlateOwner getPlateOwner(Plate plate, int requestId) throws ProviderException, PlateOwnerNotFoundException, PlateOwnerHiddenException, UnsupportedPlateException, CaptchaException, RequestCancelledException {
+    public PlateOwner getPlateOwner(Plate plate, int requestId) throws ProviderException,
+            PlateOwnerNotFoundException, PlateOwnerHiddenException, UnsupportedPlateException,
+            CaptchaException, RequestCancelledException {
 
         try {
             URIBuilder uriBuilder = new URIBuilder(CACHE_URL);
@@ -89,7 +91,9 @@ public class CaptchaAutoIndexProxy extends CaptchaAutoIndexProvider {
         }
     }
 
-    private PlateOwner makeRealSearch(Plate plate, int requestId) throws CaptchaException, UnsupportedPlateException, ProviderException, RequestCancelledException, PlateOwnerNotFoundException, PlateOwnerHiddenException {
+    private PlateOwner makeRealSearch(Plate plate, int requestId) throws CaptchaException,
+            UnsupportedPlateException, ProviderException, RequestCancelledException,
+            PlateOwnerNotFoundException, PlateOwnerHiddenException {
         try {
             PlateOwner owner = realProvider.getPlateOwner(plate, requestId);
             updateCache(plate, owner);
@@ -146,7 +150,8 @@ public class CaptchaAutoIndexProxy extends CaptchaAutoIndexProvider {
         }
     }
 
-    private PlateOwner xmlToPlateOwner(InputStream xmlStream) throws ParserConfigurationException, IOException, SAXException, ProviderException {
+    private PlateOwner xmlToPlateOwner(InputStream xmlStream) throws ParserConfigurationException,
+            IOException, SAXException, ProviderException {
         DocumentBuilderFactory factory = DocumentBuilderFactory.newInstance();
         DocumentBuilder documentBuilder = factory.newDocumentBuilder();
         Document document = documentBuilder.parse(xmlStream);
@@ -154,7 +159,7 @@ public class CaptchaAutoIndexProxy extends CaptchaAutoIndexProvider {
 
         PlateOwner plateOwner = new PlateOwner();
         String name = document.getElementsByTagName("name").item(0).getTextContent();
-        if(name == null || name.length() < 3) {
+        if (name == null || name.length() < 3) {
             throw new ProviderException("Something went wrong with the cache");
         }
         plateOwner.setName(name);

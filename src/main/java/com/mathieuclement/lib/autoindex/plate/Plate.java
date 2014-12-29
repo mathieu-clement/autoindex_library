@@ -2,6 +2,9 @@ package com.mathieuclement.lib.autoindex.plate;
 
 import com.mathieuclement.lib.autoindex.canton.Canton;
 
+/**
+ * A plate. (car, motorcycle, etc.)
+ */
 public class Plate {
     private int number;
     private Canton canton;
@@ -25,21 +28,16 @@ public class Plate {
     }
 
     /**
-     * Format number such as
+     * Format plate number by adding a space if appropriate. Such as:
      * 123      => "123"
      * 1234     => "1234"
-     * 12345    => "12345"
+     * 12345    => "12 345"
      * 123456   => "123 456"
      *
      * @param number plate number
-     * @return number formatted as string with middle space if needed
+     * @return number formatted as string with a space in the middle if needed
      */
     public static String formatNumber(int number) {
-        // Format number such as
-        // 123      => "123"
-        // 1234     => "1234"
-        // 12345    => "12345"
-        // 123456   => "123 456"
 
         if (number < 1 || number > 999999) {
             throw new IllegalArgumentException(number + " is not a valid plate number!");

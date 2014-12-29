@@ -61,6 +61,9 @@ import java.util.Set;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
+/**
+ * AutoIndex for providers using the Cari system from Networkers SA.
+ */
 public abstract class CariAutoIndexProvider
         extends CaptchaAutoIndexProvider {
     private static Map<PlateType, Integer> plateTypeMapping = new LinkedHashMap<PlateType, Integer>();
@@ -100,12 +103,14 @@ public abstract class CariAutoIndexProvider
     protected abstract String getCariOnlineFullUrl();
 
     public final PlateOwner getPlateOwner(Plate plate, int requestId)
-            throws ProviderException, PlateOwnerNotFoundException, PlateOwnerHiddenException, UnsupportedPlateException, CaptchaException, RequestCancelledException {
+            throws ProviderException, PlateOwnerNotFoundException, PlateOwnerHiddenException,
+            UnsupportedPlateException, CaptchaException, RequestCancelledException {
         return doGetPlateOwner(plate, requestId, 0);
     }
 
     public final PlateOwner doGetPlateOwner(Plate plate, int requestId, int nbTry)
-            throws ProviderException, PlateOwnerNotFoundException, PlateOwnerHiddenException, UnsupportedPlateException, CaptchaException, RequestCancelledException {
+            throws ProviderException, PlateOwnerNotFoundException, PlateOwnerHiddenException,
+            UnsupportedPlateException, CaptchaException, RequestCancelledException {
         LOGGER.debug("Try " + nbTry + " for plate " + plate);
 
         if (mustCancel(requestId)) {
@@ -121,10 +126,14 @@ public abstract class CariAutoIndexProvider
         Header encodingHeader = new BasicHeader("Accept-Encoding", "gzip,deflate,sdch");
         Header connectionHeader = new BasicHeader("Connection", "keep-alive");
         // TODO Cannot keep that. Use our own User-Agent or something related to Apache HttpClient...
-        Header userAgentHeader = new BasicHeader("User-Agent", "Mozilla/5.0 (Windows NT 6.2; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/32.0.1667.0 Safari/537.36");
+        Header userAgentHeader = new BasicHeader("User-Agent",
+                "Mozilla/5.0 (Windows NT 6.2; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) " +
+                        "Chrome/32.0.1667.0 Safari/537.36");
         String lookupOwnerPageName = "rechDet";
-        Header referrerHeader = new BasicHeader("Referer", getCariOnlineFullUrl() + lookupOwnerPageName); // spelling error on purpose as in the RFC
-        Header originHeader = new BasicHeader("Origin", getCariHttpHost().getSchemeName() + "://" + getCariHttpHostname());
+        Header referrerHeader = new BasicHeader("Referer", getCariOnlineFullUrl() + lookupOwnerPageName); // spelling
+        // error on purpose as in the RFC
+        Header originHeader = new BasicHeader("Origin", getCariHttpHost().getSchemeName() + "://" +
+                getCariHttpHostname());
         Header hostHeader = new BasicHeader("Host", getCariHttpHostname());
 
         // HTTP handling
@@ -138,13 +147,15 @@ public abstract class CariAutoIndexProvider
         httpContext.setAttribute(ClientContext.COOKIE_STORE, cookieStore);
 
         // Load page a first time and get that session cookie!
-        HttpRequest dummyPageViewRequest = new BasicHttpRequest("GET", getCariOnlineFullUrl() + lookupOwnerPageName, HttpVersion.HTTP_1_1);
+        HttpRequest dummyPageViewRequest = new BasicHttpRequest("GET", getCariOnlineFullUrl() + lookupOwnerPageName,
+                HttpVersion.HTTP_1_1);
         dummyPageViewRequest.setHeader(hostHeader);
         try {
             HttpResponse dummyResponse = httpClient.execute(getCariHttpHost(), dummyPageViewRequest, httpContext);
             StatusLine statusLine = dummyResponse.getStatusLine();
             if (statusLine.getStatusCode() != 200) {
-                throw new ProviderException("Bad status when doing the dummy page view request to get a session: " + statusLine.getStatusCode() + " " + statusLine.getReasonPhrase(), plate);
+                throw new ProviderException("Bad status when doing the dummy page view request to get a session: " +
+                        statusLine.getStatusCode() + " " + statusLine.getReasonPhrase(), plate);
             }
             dummyResponse.getEntity().getContent().close();
         } catch (IOException e) {
@@ -154,17 +165,23 @@ public abstract class CariAutoIndexProvider
         fireProgress(1, PROGRESS_STEPS);
 
         String captchaImageUrl = generateCaptchaImageUrl();
-        String captchaValue = captchaHandler.handleCaptchaImage(requestId, captchaImageUrl, httpClient, getCariHttpHost(), httpContext, getCariHttpHostname(), this);
+        String captchaValue = captchaHandler.handleCaptchaImage(requestId, captchaImageUrl, httpClient,
+                getCariHttpHost(), httpContext, getCariHttpHostname(), this);
 
         fireProgress(2, PROGRESS_STEPS);
 
-        // TODO Doesn't have Cari a TimeOut for the captcha or something like this? Connection can be closed after some time.
-        // We have to get that time from the server. Then in the GUI, we show a count down, so the user can see how much time is left to enter the code.
-        // After the time is over, up to a maximal number of times, the code is generated again and refreshed on the screen.
+        // TODO Doesn't have Cari a TimeOut for the captcha or something like this? Connection can be closed
+        // after some time.
+        // We have to get that time from the server. Then in the GUI, we show a count down, so the user can see
+        // how much time is left to enter the code.
+        // After the time is over, up to a maximal number of times, the code is generated again and refreshed
+        // on the screen.
 
         // TODO Set referer
-        // TODO Set User-Agent header to the most used browser (probably the last available version of Internet Explorer)
-        BasicHttpEntityEnclosingRequest plateOwnerSearchRequest = new BasicHttpEntityEnclosingRequest("POST", getCariOnlineFullUrl() + lookupOwnerPageName, HttpVersion.HTTP_1_1);
+        // TODO Set User-Agent header to the most used browser (probably the last available version of
+        // Internet Explorer)
+        BasicHttpEntityEnclosingRequest plateOwnerSearchRequest = new BasicHttpEntityEnclosingRequest(
+                "POST", getCariOnlineFullUrl() + lookupOwnerPageName, HttpVersion.HTTP_1_1);
         plateOwnerSearchRequest.addHeader(hostHeader);
         plateOwnerSearchRequest.addHeader(urlEncodedContentTypeHeader);
         plateOwnerSearchRequest.addHeader(charsetHeader);
@@ -179,7 +196,8 @@ public abstract class CariAutoIndexProvider
         postParams.add(new BasicNameValuePair("no", String.valueOf(plate.getNumber())));
 
         if (!plateTypeMapping.containsKey(plate.getType())) {
-            throw new UnsupportedPlateException("Plate type " + plate.getType() + " is not supported by the Cari provider yet.", plate);
+            throw new UnsupportedPlateException("Plate type " + plate.getType() +
+                    " is not supported by the Cari provider yet.", plate);
         }
         postParams.add(new BasicNameValuePair("cat", String.valueOf(plateTypeMapping.get(plate.getType()))));
 
@@ -213,7 +231,8 @@ public abstract class CariAutoIndexProvider
         }
 
         try {
-            HttpResponse plateOwnerResponse = httpClient.execute(getCariHttpHost(), plateOwnerSearchRequest, httpContext);
+            HttpResponse plateOwnerResponse = httpClient.execute(getCariHttpHost(), plateOwnerSearchRequest,
+                    httpContext);
             if (plateOwnerResponse.getStatusLine().getStatusCode() != 200) {
                 throw new ProviderException("Got status " + plateOwnerResponse.getStatusLine().getStatusCode()
                         + " from server when executing request to get plate owner of plate " + plate, plate);
@@ -232,10 +251,12 @@ public abstract class CariAutoIndexProvider
         } catch (IOException e) {
             throw new ProviderException("Could not perform plate owner request on plate " + plate, e, plate);
         } catch (PlateOwnerDataException e) {
-            throw new ProviderException("Found a result for " + plate + " but there was a problem parsing that result.", e, plate);
-        } catch (CaptchaException e) {
-            if (nbTry > MAX_CAPTCHA_TRIES) throw new ProviderException("Too many tries decoding the captcha image",
+            throw new ProviderException("Found a result for " + plate + " but there was a problem parsing that result.",
                     e, plate);
+        } catch (CaptchaException e) {
+            if (nbTry > MAX_CAPTCHA_TRIES) {
+                throw new ProviderException("Too many tries decoding the captcha image", e, plate);
+            }
             return doGetPlateOwner(plate, requestId, nbTry + 1); // Call itself again until nbTry above max
         } catch (IgnoreMeException e) {
             throw new ProviderException("Strange error on plate " + plate + ", went back to welcome page. ", e, plate);
@@ -246,9 +267,12 @@ public abstract class CariAutoIndexProvider
 
     protected abstract String getCariHttpHostname();
 
-    private static final Pattern PLATE_OWNER_PATTERN = Pattern.compile("<td class='libelle'>(.+)\\s*</td>\\s+<td( nowrap)?>\\s*(.+)\\s*</td>");
+    private static final Pattern PLATE_OWNER_PATTERN = Pattern.compile(
+            "<td class='libelle'>(.+)\\s*</td>\\s+<td( nowrap)?>\\s*(.+)\\s*</td>");
 
-    private PlateOwner htmlToPlateOwner(HttpResponse response, Plate plate) throws IOException, PlateOwnerDataException, CaptchaException, ProviderException, PlateOwnerNotFoundException, PlateOwnerHiddenException, IgnoreMeException {
+    private PlateOwner htmlToPlateOwner(HttpResponse response, Plate plate) throws IOException,
+            PlateOwnerDataException, CaptchaException, ProviderException, PlateOwnerNotFoundException,
+            PlateOwnerHiddenException, IgnoreMeException {
         String htmlPage = ResponseUtils.toString(response);
 
         // Check presence of warning (shown on Fribourg webpage)
@@ -273,8 +297,10 @@ public abstract class CariAutoIndexProvider
 
         PlateOwner plateOwner = new PlateOwner();
 
-        // In Fribourg, currently the message "Aucun détenteur trouvé!" is shown both when the owner wants to hide its data and the number is not allocated,
-        // but in Valais, the pages are different. It prints "Ce numéro de plaque est hors tabelle" when nobody owns the number.
+        // In Fribourg, currently the message "Aucun détenteur trouvé!" is shown both when the owner wants to hide his
+        // data and the number is not allocated,
+        // but in Valais, the pages are different. It prints "Ce numéro de plaque est hors tabelle" when nobody owns
+        // the number.
         if (htmlPage.contains("Aucun détenteur trouvé!") || htmlPage.contains("Ce numéro de plaque est hors tabelle")) {
             throw new PlateOwnerNotFoundException("Plate owner not found or hidden", plate);
         }
@@ -294,7 +320,8 @@ public abstract class CariAutoIndexProvider
             throw new PlateOwnerHiddenException("Reserved plate", plate);
         }
 
-        // TODO I noticed in Valais, you can get the message "Plaque disponible". Maybe we can do something with that message.
+        // TODO I noticed in Valais, you can get the message "Plaque disponible".
+        // Maybe we can do something with that message.
 
         Matcher matcher = PLATE_OWNER_PATTERN.matcher(htmlPage);
 

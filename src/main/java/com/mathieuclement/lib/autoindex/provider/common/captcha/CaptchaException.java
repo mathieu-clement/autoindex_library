@@ -1,5 +1,8 @@
 package com.mathieuclement.lib.autoindex.provider.common.captcha;
 
+/**
+ * Exception related to the captcha. (Network or solved incorrectly)
+ */
 public class CaptchaException extends Exception {
     public CaptchaException() {
     }

@@ -4,8 +4,7 @@ import junit.framework.Assert;
 import org.junit.Test;
 
 /**
- * Author: Mathieu Clément
- * Date: 23.01.2013
+ * Test for the "Plate" class.
  */
 public class PlateTest {
     @Test

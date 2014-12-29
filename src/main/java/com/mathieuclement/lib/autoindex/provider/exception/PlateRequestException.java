@@ -2,6 +2,9 @@ package com.mathieuclement.lib.autoindex.provider.exception;
 
 import com.mathieuclement.lib.autoindex.plate.Plate;
 
+/**
+ * There was a problem with the request.
+ */
 public abstract class PlateRequestException extends Exception {
     private Plate plate;
 
