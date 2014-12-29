@@ -11,7 +11,7 @@ repositories {
 [ compileJava, compileTestJava ]*.options*.encoding = 'UTF-8'
 
 dependencies {
-    // TODO: Check dependencies are not packageed in JAR
+    // TODO: Check dependencies are not packaged in JAR
     compile 'org.apache.httpcomponents:httpcore:4.3.2'
     // compile 'org.apache.httpcomponents:httpclient:4.3.5'
     compile 'org.apache.httpcomponents:httpmime:4.3.5'
