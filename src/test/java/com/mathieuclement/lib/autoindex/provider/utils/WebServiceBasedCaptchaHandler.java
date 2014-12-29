@@ -73,10 +73,8 @@ public class WebServiceBasedCaptchaHandler implements CaptchaHandler {
                     e.printStackTrace();
                 }
             }
-            if (captchaImageFile != null) {
-                if (!captchaImageFile.delete()) {
-                    System.err.println("Could not delete " + captchaImageFile.getAbsolutePath());
-                }
+            if (captchaImageFile != null && !captchaImageFile.delete()) {
+                System.err.println("Could not delete " + captchaImageFile.getAbsolutePath());
             }
         }
         return s;
@@ -84,7 +82,7 @@ public class WebServiceBasedCaptchaHandler implements CaptchaHandler {
 
     private String solveCaptcha(File file, HttpClient httpClient, AutoIndexProvider autoIndexProvider)
             throws IOException {
-        String system = (autoIndexProvider instanceof CariAutoIndexProvider) ? "cari" : "viacar";
+        String system = autoIndexProvider instanceof CariAutoIndexProvider ? "cari" : "viacar";
 
         HttpPost httpPost = new HttpPost("http://mathieuclement.com:13245/" + system);
         // requires HTTPMime library
