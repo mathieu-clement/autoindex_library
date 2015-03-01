@@ -4,6 +4,7 @@
 *.iws
 .idea/
 out/
+build/
 local.properties
 
 .gradle*
